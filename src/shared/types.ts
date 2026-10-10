@@ -1,5 +1,5 @@
 export type MediaMode = 'video' | 'audio'
-export type TaskState = 'queued' | 'analyzing' | 'choosing' | 'transferring' | 'processing' | 'paused' | 'completed' | 'failed' | 'canceled'
+export type TaskState = 'queued' | 'analyzing' | 'choosing' | 'transferring' | 'processing' | 'finalizing' | 'paused' | 'completed' | 'failed' | 'canceled'
 export type MediaType = 'video' | 'audio' | 'image' | 'file'
 export type Scene = 'home' | 'downloads' | 'history' | 'settings'
 
@@ -16,6 +16,7 @@ export interface Task {
   progress: number | null
   stage: string
   error: string | null
+  errorCode?: string | null
   outputPath: string | null
   createdAt: string
   updatedAt: string
@@ -30,13 +31,18 @@ export interface Preferences {
   videoQuality: 'max' | '2160' | '1440' | '1080' | '720' | '480'
   audioFormat: 'best' | 'mp3' | 'ogg' | 'wav' | 'opus'
   reducedMotion: boolean
+  locale: 'system' | 'pt-BR' | 'en'
+  tutorialSeenVersion: number
 }
 export type SessionService = 'instagram' | 'youtube' | 'twitter'
 export type ConversionFormat = 'mp4' | 'mkv' | 'mp3' | 'wav'
-export interface AppSnapshot { tasks: Task[]; history: Task[]; preferences: Preferences; sessions: Record<SessionService, boolean>; engine: 'starting' | 'ready' | 'error'; engineError?: string }
+export interface HistoryPage { items: Task[]; nextOffset: number | null }
+export interface HistoryQuery { search?: string; mediaType?: MediaType | 'all'; offset?: number; limit?: number }
+export interface AppSnapshot { tasks: Task[]; history: Task[]; preferences: Preferences; sessions: Record<SessionService, boolean>; engine: 'starting' | 'ready' | 'error'; engineError?: string; appVersion: string }
 
 export interface NibApi {
   snapshot(): Promise<AppSnapshot>
+  history(query: HistoryQuery): Promise<HistoryPage>
   submit(url: string, mode: MediaMode): Promise<string>
   select(id: string, indexes: number[]): Promise<void>
   taskAction(id: string, action: 'pause' | 'resume' | 'cancel' | 'retry'): Promise<void>
@@ -47,5 +53,9 @@ export interface NibApi {
   clearHistory(): Promise<void>
   openPath(path: string, folder: boolean): Promise<void>
   convertFile(format: ConversionFormat): Promise<{ path: string; method: 'copy' | 'converted' } | null>
+  exportDiagnostics(): Promise<string | null>
+  openReleases(): Promise<void>
+  restartEngine(): Promise<void>
   onSnapshot(callback: (snapshot: AppSnapshot) => void): () => void
+  onTask(callback: (task: Task) => void): () => void
 }

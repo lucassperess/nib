@@ -1,6 +1,7 @@
 import { spawn, type ChildProcess } from 'node:child_process'
 import { randomUUID } from 'node:crypto'
-import { constants, copyFileSync, createWriteStream, existsSync, mkdirSync, rmSync, statSync } from 'node:fs'
+import { constants, createWriteStream, existsSync, mkdirSync, rmSync } from 'node:fs'
+import { copyFile, stat } from 'node:fs/promises'
 import { basename, extname, join, parse } from 'node:path'
 import { once } from 'node:events'
 import type { MediaMode, PickerItem, Task } from '../shared/types'
@@ -14,6 +15,18 @@ type CobaltResponse =
   | { status: 'error'; error: { code: string; context?: Record<string, unknown> } }
 
 type Control = { abort: AbortController; paused: boolean; wake?: () => void; process?: ChildProcess; canceled: boolean }
+class DownloadError extends Error { constructor(readonly code: string, message: string) { super(message) } }
+const errorCode = (error: unknown): string => {
+  if (error instanceof DownloadError) return error.code
+  const code = (error as NodeJS.ErrnoException)?.code
+  if (code === 'ENOSPC') return 'disk.full'
+  if (code === 'EACCES' || code === 'EPERM' || code === 'EROFS') return 'disk.permission'
+  if (error instanceof Error && /HTTP 429/.test(error.message)) return 'network.rate'
+  if (error instanceof Error && /HTTP 5\d\d/.test(error.message)) return 'network.server'
+  if (error instanceof Error && /Processing failed/.test(error.message)) return 'processing.failed'
+  if (error instanceof Error && /timeout|fetch failed|network/i.test(error.message)) return 'network.failed'
+  return 'unknown'
+}
 
 const safeFilename = (name: string): string => {
   const cleaned = basename(name).replace(/[<>:"/\\|?*\x00-\x1F]/g, '_').replace(/[. ]+$/g, '').slice(0, 170)
@@ -47,8 +60,8 @@ export class Downloads {
   private active = new Map<string, Control>()
   private pumping = false
   private processing = false
-  constructor(private store: Store, private engine: CobaltEngine, private changed: () => void, private ffmpeg: string) {}
-  private save(task: Task): void { this.store.saveTask(task); this.changed() }
+  constructor(private store: Store, private engine: CobaltEngine, private changed: (task: Task) => void, private ffmpeg: string, private structureChanged: () => void = () => {}) {}
+  private save(task: Task): void { this.store.saveTask(task); this.changed(task) }
   submit(url: string, mode: MediaMode, pickerIndex?: number): string {
     const normalized = url.trim()
     const parsed = new URL(normalized)
@@ -71,7 +84,7 @@ export class Downloads {
     if (!valid.length) throw new Error('Choose at least one item')
     this.store.deleteTask(id)
     for (const index of valid) this.submit(parent.sourceUrl, parent.mode, index)
-    this.changed()
+    this.structureChanged()
   }
   action(id: string, action: 'pause' | 'resume' | 'cancel' | 'retry'): void {
     const task = this.store.getTask(id)
@@ -85,7 +98,7 @@ export class Downloads {
       control?.abort.abort(); control?.process?.kill(); if (control) { control.canceled = true; control.wake?.() }
       task.state = 'canceled'; task.stage = 'Canceled'; this.save(task)
     } else if (action === 'retry' && ['failed', 'canceled', 'paused'].includes(task.state) && !control) {
-      task.state = 'queued'; task.error = null; task.progress = null; task.bytesReceived = 0; task.bytesTotal = null; task.stage = 'Waiting'; this.save(task); this.pump()
+      task.state = 'queued'; task.error = null; task.errorCode = null; task.progress = null; task.bytesReceived = 0; task.bytesTotal = null; task.stage = 'Waiting'; this.save(task); this.pump()
     }
   }
   pump(): void {
@@ -116,7 +129,7 @@ export class Downloads {
         localProcessing: 'preferred'
       })
       if (control.canceled) return
-      if (response.status === 'error') throw new Error(friendlyCobaltError(response.error.code))
+      if (response.status === 'error') throw new DownloadError(response.error.code, friendlyCobaltError(response.error.code))
       if (response.status === 'picker' && task.pickerIndex === undefined) {
         task.state = 'choosing'; task.stage = 'Choose what to save'; task.pickerItems = response.picker; this.save(task); return
       }
@@ -164,21 +177,24 @@ export class Downloads {
         } finally { this.processing = false }
       }
       if (control.canceled) return
+      task.state = 'finalizing'; task.stage = 'Saving file'; task.progress = null; this.save(task)
       let destination = outputPath(directory, finalName)
       for (;;) {
-        try { copyFileSync(incoming, destination, constants.COPYFILE_EXCL); break }
+        try { await copyFile(incoming, destination, constants.COPYFILE_EXCL); break }
         catch (error) {
           if ((error as NodeJS.ErrnoException).code !== 'EEXIST') throw error
           destination = outputPath(directory, finalName)
         }
       }
+      if (control.canceled) { rmSync(destination, { force: true }); return }
       task.outputPath = destination; task.state = 'completed'; task.stage = 'Ready to open'
       task.completedAt = new Date().toISOString(); task.progress = 1
-      task.bytesReceived = statSync(destination).size; task.bytesTotal = task.bytesReceived
+      task.bytesReceived = (await stat(destination)).size; task.bytesTotal = task.bytesReceived
       this.save(task)
     } catch (error) {
       if (!control.canceled) {
         task.state = 'failed'; task.error = error instanceof Error ? error.message : String(error)
+        task.errorCode = errorCode(error)
         task.stage = 'Could not finish'; task.progress = null; this.save(task)
       }
     } finally {

@@ -17,23 +17,26 @@ afterEach(() => {
 
 it('keeps two concurrent downloads with the same filename', async () => {
   const records = new Map<string, Task>()
+  const states: string[] = []
   const store = {
     saveTask(task: Task) { records.set(task.id, structuredClone(task)) },
     getTask(id: string) { return records.get(id) },
     tasks() { return [...records.values()] },
-    getPreferences() { return { downloadDirectory: folder, videoQuality: 'max', audioFormat: 'best', reducedMotion: false } }
+    getPreferences() { return { downloadDirectory: folder, videoQuality: 'max', audioFormat: 'best', reducedMotion: false, locale: 'system', tutorialSeenVersion: 0 } }
   } as unknown as Store
   const engine = { request: async () => ({ status: 'redirect', url: 'data:text/plain,media', filename: 'same-name.mp4' }) } as unknown as CobaltEngine
-  const downloads = new Downloads(store, engine, () => {}, 'ffmpeg')
+  const downloads = new Downloads(store, engine, task => states.push(task.state), 'ffmpeg')
   downloads.submit('https://example.com/one', 'video')
   downloads.submit('https://example.com/two', 'video')
   await waitFor(() => records.size === 2 && [...records.values()].every(task => task.state === 'completed'))
   expect(readdirSync(folder).sort()).toEqual(['same-name (2).mp4', 'same-name.mp4'])
+  expect(states).toContain('finalizing')
+  expect(states.lastIndexOf('finalizing')).toBeLessThan(states.lastIndexOf('completed'))
 })
 
 it('saves each selected picker item as an independent completed file', async () => {
   const records = new Map<string, Task>()
-  const preferences: Preferences = { downloadDirectory: folder, videoQuality: 'max', audioFormat: 'best', reducedMotion: false }
+  const preferences: Preferences = { downloadDirectory: folder, videoQuality: 'max', audioFormat: 'best', reducedMotion: false, locale: 'system', tutorialSeenVersion: 0 }
   const store = {
     saveTask(task: Task) { records.set(task.id, structuredClone(task)) },
     getTask(id: string) { return records.get(id) },

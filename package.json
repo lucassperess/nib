@@ -1,6 +1,6 @@
 {
   "name": "nib-desktop",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "description": "Nib — a little desktop companion for saving media",
   "main": "./out/main/index.js",
@@ -36,8 +36,8 @@
     "files": ["out/**/*", "package.json"],
     "asarUnpack": ["node_modules/better-sqlite3/**"],
     "extraResources": [
-      { "from": ".bundle/cobalt-api", "to": "cobalt", "filter": ["**/*"] },
-      { "from": ".bundle/cobalt-api/node_modules", "to": "cobalt/node_modules", "filter": ["**/*"] },
+      { "from": ".bundle/cobalt-runtime", "to": "cobalt" },
+      { "from": ".bundle/cobalt-runtime/node_modules", "to": "cobalt/node_modules", "filter": ["**/*"] },
       { "from": ".runtime/node.exe", "to": "node.exe" }
     ],
     "win": { "icon": "assets/branding/nib.ico", "target": [{ "target": "nsis", "arch": ["x64"] }] },
