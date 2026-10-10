@@ -1,0 +1,46 @@
+{
+  "name": "nib-desktop",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Nib — a little desktop companion for saving media",
+  "main": "./out/main/index.js",
+  "type": "module",
+  "scripts": {
+    "postinstall": "electron-builder install-app-deps",
+    "dev": "electron-vite dev",
+    "build": "electron-vite build",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "prepare:cobalt": "node scripts/prepare-cobalt.mjs",
+    "dist:win": "pnpm build && pnpm prepare:cobalt && electron-builder --win nsis"
+  },
+  "dependencies": {
+    "better-sqlite3": "^12.2.0"
+  },
+  "devDependencies": {
+    "@sveltejs/vite-plugin-svelte": "^6.2.1",
+    "@types/better-sqlite3": "^7.6.13",
+    "@types/node": "^24.0.0",
+    "electron": "^37.0.0",
+    "electron-builder": "^26.0.12",
+    "electron-vite": "^4.0.0",
+    "svelte": "^5.0.0",
+    "typescript": "^5.9.3",
+    "vite": "^7.0.0",
+    "vitest": "^3.2.0"
+  },
+  "build": {
+    "appId": "dev.nib.desktop",
+    "productName": "Nib",
+    "directories": { "output": "release" },
+    "files": ["out/**/*", "package.json"],
+    "asarUnpack": ["node_modules/better-sqlite3/**"],
+    "extraResources": [
+      { "from": ".bundle/cobalt-api", "to": "cobalt", "filter": ["**/*"] },
+      { "from": ".bundle/cobalt-api/node_modules", "to": "cobalt/node_modules", "filter": ["**/*"] },
+      { "from": ".runtime/node.exe", "to": "node.exe" }
+    ],
+    "win": { "icon": "assets/branding/nib.ico", "target": [{ "target": "nsis", "arch": ["x64"] }] },
+    "nsis": { "oneClick": false, "allowToChangeInstallationDirectory": true }
+  }
+}
