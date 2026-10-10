@@ -2,6 +2,7 @@
   "name": "nib-desktop",
   "version": "0.2.0",
   "private": true,
+  "packageManager": "pnpm@11.25.0",
   "description": "Nib — a little desktop companion for saving media",
   "main": "./out/main/index.js",
   "type": "module",

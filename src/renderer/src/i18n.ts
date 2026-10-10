@@ -2,7 +2,7 @@ export type Language = 'pt-BR' | 'en'
 
 const strings: Record<Language, Record<string, string>> = {
   en: {
-    home: 'Home', downloads: 'Downloads', history: 'History', settings: 'Settings',
+    home: 'Home', downloads: 'Downloads', history: 'History', settings: 'Settings', mainNavigation: 'Main navigation', photo: 'Photo', gif: 'GIF',
     link: 'Media link', video: 'Video', audio: 'Audio', download: 'Download with Nib ↗',
     privacyNote: 'Your queue and history stay here. Nib contacts the linked site to fetch media.', supported: 'Supported',
     queueCount: '{count} in your queue', convert: 'Convert a file ↗', all: 'All', downloading: 'Downloading', processing: 'Processing', needsHelp: 'Needs help',
@@ -33,7 +33,7 @@ const strings: Record<Language, Record<string, string>> = {
     taskCount: '{count} tasks', dismiss: 'Dismiss Nib message'
   },
   'pt-BR': {
-    home: 'Início', downloads: 'Downloads', history: 'Histórico', settings: 'Configurações',
+    home: 'Início', downloads: 'Downloads', history: 'Histórico', settings: 'Configurações', mainNavigation: 'Navegação principal', photo: 'Foto', gif: 'GIF',
     link: 'Link da mídia', video: 'Vídeo', audio: 'Áudio', download: 'Baixar com o Nib ↗',
     privacyNote: 'Sua fila e seu histórico ficam aqui. O Nib acessa o site do link para buscar a mídia.', supported: 'Compatível com',
     queueCount: '{count} na fila', convert: 'Converter arquivo ↗', all: 'Todos', downloading: 'Baixando', processing: 'Processando', needsHelp: 'Precisa de ajuda',
