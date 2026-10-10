@@ -13,7 +13,7 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "prepare:cobalt": "node scripts/prepare-cobalt.mjs",
-    "dist:win": "pnpm build && pnpm prepare:cobalt && electron-builder --win nsis"
+    "dist:win": "pnpm build && pnpm prepare:cobalt && electron-builder --win nsis --publish never"
   },
   "dependencies": {
     "better-sqlite3": "^12.2.0"
