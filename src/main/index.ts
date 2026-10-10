@@ -186,7 +186,10 @@ app.whenReady().then(async () => {
           if (task?.state === 'completed' || task?.state === 'failed') break
           await new Promise(resolve => setTimeout(resolve, 250))
         } while (Date.now() < deadline)
-        if (task?.state !== 'completed' || !task.outputPath || !existsSync(task.outputPath)) throw new Error(`${mode} failed: ${task?.errorCode || task?.state || 'timeout'}`)
+        if (task?.state !== 'completed' || !task.outputPath || !existsSync(task.outputPath)) {
+          const detail = (task?.error || '').replace(/https?:\/\/\S+/g, '[url]').replace(/[A-Z]:\\[^\s]+/gi, '[path]').slice(0, 400)
+          throw new Error(`${mode} failed: ${task?.errorCode || task?.state || 'timeout'}${detail ? ` (${detail})` : ''}`)
+        }
         report[mode] = { bytes: task.bytesReceived, mediaType: task.mediaType }
       }
       report.ok = true
