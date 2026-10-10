@@ -6,7 +6,7 @@ This repository is private for now, but is organized for a future public release
 
 ## First run
 
-1. Install `Nib Setup 0.1.0.exe` from `release/` on Windows x64.
+1. Download `Nib Setup 0.1.0.exe` from this private repository's [GitHub Releases](https://github.com/lucassperess/nib/releases), or build it locally into `release/` with `pnpm dist:win`. Install it on Windows x64.
 2. Open Nib. The local engine starts automatically and binds only to `127.0.0.1`.
 3. On Home, paste a supported link and choose Video or Audio.
 4. Watch the task on Downloads. If a link contains multiple items, choose which ones to save.
