@@ -81,8 +81,11 @@ export class CobaltEngine {
       body: JSON.stringify(body),
       signal: AbortSignal.timeout(30_000)
     })
+    const payload = await response.json().catch(() => null) as unknown
+    if (payload && typeof payload === 'object' && 'status' in payload && payload.status === 'error') return payload as T
     if (!response.ok) throw new Error(`Cobalt HTTP ${response.status}`)
-    return await response.json() as T
+    if (!payload) throw new Error('Cobalt returned an empty response')
+    return payload as T
   }
   async restart(): Promise<void> { this.stop(); await this.start() }
   stop(): void {
