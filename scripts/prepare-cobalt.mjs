@@ -27,7 +27,7 @@ try {
     if (within.startsWith('..') || isAbsolute(within) || within === '') throw new Error('Refusing to remove a path outside Nib')
     rmSync(candidate, { recursive: true, force: true })
   }
-  runPnpm(['--filter', '@imput/cobalt-api', 'deploy', '--legacy', '--prod', '--no-optional', target])
+  runPnpm(['--config.force-legacy-deploy=true', '--filter', '@imput/cobalt-api', 'deploy', '--prod', '--no-optional', target])
 } finally {
   writeFileSync(workspaceConfig, originalConfig)
 }
