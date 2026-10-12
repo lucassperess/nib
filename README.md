@@ -7,7 +7,7 @@ Nib is a Windows x64 desktop companion for saving media from links. Its interfac
 ## Baixar e instalar — sem terminal
 
 1. Abra a página de [Releases do Nib](https://github.com/lucassperess/nib/releases/latest).
-2. Na seção **Assets**, clique em **Nib Setup 0.4.0.exe** para baixar o instalador. Não escolha **Source code** se você só quer usar o aplicativo.
+2. Na seção **Assets**, clique no arquivo do Nib que termina em **.exe** para baixar o instalador. Não escolha **Source code** se você só quer usar o aplicativo.
 3. Abra o arquivo baixado, siga o instalador e inicie **Nib** pelo menu Iniciar.
 4. Siga o tutorial dentro do app. Na Home, cole um link, escolha **Vídeo** ou **Áudio** e clique em **Baixar**. Acompanhe em **Downloads** e abra o arquivo em **Histórico**.
 

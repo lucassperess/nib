@@ -5,12 +5,12 @@ O Nib é um aplicativo para **Windows x64**. Você só precisa do instalador; n�
 ## 1. Baixe o aplicativo
 
 1. Acesse [github.com/lucassperess/nib/releases/latest](https://github.com/lucassperess/nib/releases/latest).
-2. Role até **Assets** e clique em **Nib Setup 0.4.0.exe**. O arquivo começa a baixar.
+2. Role até **Assets** e clique no arquivo do Nib que termina em **.exe**. O arquivo começa a baixar.
 3. Se você vir opções chamadas **Source code (zip)** ou **Source code (tar.gz)**, ignore-as: elas são para quem quer estudar o código, não para instalar o app.
 
 ## 2. Instale
 
-1. Abra **Nib Setup 0.4.0.exe** na pasta Downloads do Windows.
+1. Abra o instalador **.exe** do Nib na pasta Downloads do Windows.
 2. Escolha a pasta de instalação, se quiser, e conclua o assistente.
 3. Abra **Nib** pelo menu Iniciar. Se o Windows mostrar um aviso de segurança, confirme o nome e a origem do arquivo antes de continuar. Se não tiver certeza, pare e confira o link da release.
 
@@ -47,7 +47,7 @@ O Nib não contorna DRM. A disponibilidade de cada mídia depende do serviço de
 
 Nib runs on **Windows x64**. No terminal, Node.js, or VPS is needed.
 
-1. Open the [latest GitHub release](https://github.com/lucassperess/nib/releases/latest). Under **Assets**, download **Nib Setup 0.4.0.exe**, not the Source code archive.
+1. Open the [latest GitHub release](https://github.com/lucassperess/nib/releases/latest). Under **Assets**, download the Nib **.exe** installer, not the Source code archive.
 2. Run the installer and open **Nib** from the Start menu. If Windows shows a security warning, verify the file name and release source before proceeding.
 3. Follow or skip the five-step tour. You can replay it under **Settings → Help → Replay the tour**.
 4. On Home, paste a media link, choose **Video** or **Audio**, and click **Download with Nib**. Follow the task in Downloads and open completed files from History.
