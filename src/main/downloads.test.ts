@@ -38,6 +38,21 @@ it('marks a failed transfer as a retryable network error', async () => {
   expect(records.get(id)?.errorCode).toBe('network.server')
 })
 
+it('reports an empty Cobalt tunnel before sending it to FFmpeg', async () => {
+  const records = new Map<string, Task>()
+  const engine = { request: async () => ({
+    status: 'local-processing', type: 'merge', tunnel: ['https://example.com/empty'],
+    output: { filename: 'clip.mp4', type: 'video/mp4' }
+  }) } as unknown as CobaltEngine
+  vi.stubGlobal('fetch', async () => new Response(new Uint8Array(), { status: 200, headers: { 'content-length': '0' } }))
+  const downloads = new Downloads(testStore(records), engine, () => {}, 'missing-ffmpeg')
+  const id = downloads.submit('https://example.com/post', 'video')
+  await waitFor(() => records.get(id)?.state === 'failed')
+  expect(records.get(id)?.errorCode).toBe('media.empty')
+  expect(records.get(id)?.error).toBe('The source returned an empty media file')
+  expect(readdirSync(folder)).toEqual([])
+})
+
 it('pauses and resumes a transfer without losing received bytes', async () => {
   const records = new Map<string, Task>()
   let releaseSecond!: () => void

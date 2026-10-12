@@ -205,6 +205,10 @@ export class Downloads {
     task.state = 'transferring'; task.stage = 'Downloading'; task.bytesReceived = 0; task.bytesTotal = null; task.progress = null; this.save(task)
     const response = await fetch(url, { signal: control.abort.signal, redirect: 'follow' })
     if (!response.ok || !response.body) throw new Error(`Download HTTP ${response.status}`)
+    if (response.headers.get('content-length') === '0') {
+      await response.body.cancel()
+      throw new DownloadError('media.empty', 'The source returned an empty media file')
+    }
     const exact = Number(response.headers.get('content-length'))
     task.bytesTotal = Number.isFinite(exact) && exact > 0 ? exact : null
     const stream = createWriteStream(file, { flags: 'wx' })
@@ -228,6 +232,7 @@ export class Downloads {
         }
       }
       stream.end(); await once(stream, 'finish')
+      if (task.bytesReceived === 0) throw new DownloadError('media.empty', 'The source returned an empty media file')
       if (task.bytesTotal && task.bytesReceived !== task.bytesTotal) throw new Error('Download was incomplete')
     } finally {
       reader.releaseLock()

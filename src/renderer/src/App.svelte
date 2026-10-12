@@ -182,6 +182,7 @@
     if (code.includes('rate')) return tr('errorRate')
     if (code === 'disk.full') return tr('errorDisk')
     if (code === 'disk.permission') return tr('errorPermission')
+    if (code === 'media.empty') return tr('errorEmptyMedia')
     if (code === 'processing.failed') return tr('errorProcessing')
     if (code.startsWith('network.') || /fetch\.fail|timed_out|timeout|connection|network|HTTP 5\d\d/i.test(code)) return tr('errorNetwork')
     return tr('errorUnknown')
