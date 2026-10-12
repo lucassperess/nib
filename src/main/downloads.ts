@@ -208,6 +208,8 @@ export class Downloads {
     const exact = Number(response.headers.get('content-length'))
     task.bytesTotal = Number.isFinite(exact) && exact > 0 ? exact : null
     const stream = createWriteStream(file, { flags: 'wx' })
+    let writeError: Error | null = null
+    stream.on('error', error => { writeError = error })
     const reader = response.body.getReader()
     let lastUpdate = 0
     try {
@@ -215,8 +217,9 @@ export class Downloads {
         if (control.paused) await new Promise<void>(resolve => { control.wake = resolve })
         if (control.canceled) throw new Error('Canceled')
         const { value, done } = await reader.read()
+        if (writeError) throw writeError
         if (done) break
-        if (!stream.write(value)) await once(stream, 'drain')
+        await new Promise<void>((resolve, reject) => stream.write(value, error => error ? reject(error) : resolve()))
         task.bytesReceived += value.byteLength
         const now = Date.now()
         if (now - lastUpdate > 250) {

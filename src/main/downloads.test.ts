@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, expect, it } from 'vitest'
+import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import { existsSync, mkdtempSync, readdirSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join, relative, resolve, isAbsolute } from 'node:path'
@@ -10,9 +10,75 @@ import type { CobaltEngine } from './engine'
 let folder: string
 beforeEach(() => { folder = mkdtempSync(join(tmpdir(), 'nib-picker-test-')) })
 afterEach(() => {
+  vi.unstubAllGlobals()
   const within = relative(resolve(tmpdir()), resolve(folder))
   if (within.startsWith('..') || isAbsolute(within) || !within.startsWith('nib-picker-test-')) throw new Error('Unsafe test cleanup')
   rmSync(folder, { recursive: true, force: true })
+})
+
+function testStore(records: Map<string, Task>): Store {
+  return {
+    saveTask(task: Task) { records.set(task.id, structuredClone(task)) },
+    getTask(id: string) { return records.get(id) },
+    tasks() { return [...records.values()] },
+    getPreferences() { return { downloadDirectory: folder, videoQuality: 'max', audioFormat: 'best', reducedMotion: false, locale: 'system', tutorialSeenVersion: 0 } }
+  } as Store
+}
+
+it('marks a failed transfer as a retryable network error', async () => {
+  const records = new Map<string, Task>()
+  const engine = { request: async () => ({ status: 'redirect', url: 'https://example.com/media', filename: 'clip.mp4' }) } as unknown as CobaltEngine
+  vi.stubGlobal('fetch', async () => new Response(null, { status: 503 }))
+  const downloads = new Downloads(testStore(records), engine, () => {}, 'ffmpeg')
+  const id = downloads.submit('https://example.com/post', 'video')
+  await waitFor(() => records.get(id)?.state === 'failed')
+  expect(records.get(id)?.errorCode).toBe('network.server')
+  downloads.action(id, 'retry')
+  await waitFor(() => records.get(id)?.state === 'failed')
+  expect(records.get(id)?.errorCode).toBe('network.server')
+})
+
+it('pauses and resumes a transfer without losing received bytes', async () => {
+  const records = new Map<string, Task>()
+  let releaseSecond!: () => void
+  const second = new Promise<void>(resolve => { releaseSecond = resolve })
+  const body = new ReadableStream<Uint8Array>({
+    start(controller) { controller.enqueue(new Uint8Array([1, 2, 3, 4])) },
+    async pull(controller) { await second; controller.enqueue(new Uint8Array([5, 6, 7, 8])); controller.close() }
+  })
+  vi.stubGlobal('fetch', async () => new Response(body, { headers: { 'content-length': '8' } }))
+  const engine = { request: async () => ({ status: 'redirect', url: 'https://example.com/media', filename: 'clip.mp4' }) } as unknown as CobaltEngine
+  const downloads = new Downloads(testStore(records), engine, () => {}, 'ffmpeg')
+  const id = downloads.submit('https://example.com/post', 'video')
+  await waitFor(() => (records.get(id)?.bytesReceived || 0) >= 4)
+  downloads.action(id, 'pause')
+  releaseSecond()
+  await new Promise(resolve => setTimeout(resolve, 40))
+  expect(records.get(id)?.state).toBe('paused')
+  expect(records.get(id)?.bytesReceived).toBe(4)
+  downloads.action(id, 'resume')
+  await waitFor(() => records.get(id)?.state === 'completed')
+  expect(records.get(id)?.bytesReceived).toBe(8)
+})
+
+it('cancels an active transfer and removes its temporary file', async () => {
+  const records = new Map<string, Task>()
+  let releaseSecond!: () => void
+  const second = new Promise<void>(resolve => { releaseSecond = resolve })
+  const body = new ReadableStream<Uint8Array>({
+    start(controller) { controller.enqueue(new Uint8Array([1, 2, 3, 4])) },
+    async pull(controller) { await second; controller.enqueue(new Uint8Array([5, 6, 7, 8])); controller.close() }
+  })
+  vi.stubGlobal('fetch', async () => new Response(body))
+  const engine = { request: async () => ({ status: 'redirect', url: 'https://example.com/media', filename: 'clip.mp4' }) } as unknown as CobaltEngine
+  const downloads = new Downloads(testStore(records), engine, () => {}, 'ffmpeg')
+  const id = downloads.submit('https://example.com/post', 'video')
+  await waitFor(() => (records.get(id)?.bytesReceived || 0) >= 4)
+  downloads.action(id, 'cancel')
+  releaseSecond()
+  await waitFor(() => !downloads.busy())
+  expect(records.get(id)?.state).toBe('canceled')
+  expect(readdirSync(folder)).toEqual([])
 })
 
 it('keeps two concurrent downloads with the same filename', async () => {
