@@ -86,10 +86,16 @@ export class Downloads {
     for (const index of valid) this.submit(parent.sourceUrl, parent.mode, index)
     this.structureChanged()
   }
-  action(id: string, action: 'pause' | 'resume' | 'cancel' | 'retry'): void {
+  action(id: string, action: 'pause' | 'resume' | 'cancel' | 'retry' | 'remove'): void {
     const task = this.store.getTask(id)
     if (!task) throw new Error('Task was not found')
     const control = this.active.get(id)
+    if (action === 'remove') {
+      if (task.state !== 'failed' && task.state !== 'canceled') throw new Error('Only failed or canceled tasks can be removed')
+      this.store.deleteTask(id)
+      this.structureChanged()
+      return
+    }
     if (action === 'pause' && control && task.state === 'transferring') {
       control.paused = true; task.state = 'paused'; task.stage = 'Paused'; this.save(task)
     } else if (action === 'resume' && control && task.state === 'paused') {

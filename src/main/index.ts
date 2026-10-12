@@ -65,7 +65,7 @@ function registerIpc(): void {
     return downloads.submit(url, mode)
   })
   handle('nib:select', (id: string, indexes: number[]) => downloads.select(id, indexes))
-  handle('nib:task-action', (id: string, action: 'pause' | 'resume' | 'cancel' | 'retry') => downloads.action(id, action))
+  handle('nib:task-action', (id: string, action: 'pause' | 'resume' | 'cancel' | 'retry' | 'remove') => downloads.action(id, action))
   handle('nib:set-preferences', (patch: Partial<Preferences>) => {
     const current = store.getPreferences()
     const next: Preferences = {

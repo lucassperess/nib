@@ -45,7 +45,7 @@ export interface NibApi {
   history(query: HistoryQuery): Promise<HistoryPage>
   submit(url: string, mode: MediaMode): Promise<string>
   select(id: string, indexes: number[]): Promise<void>
-  taskAction(id: string, action: 'pause' | 'resume' | 'cancel' | 'retry'): Promise<void>
+  taskAction(id: string, action: 'pause' | 'resume' | 'cancel' | 'retry' | 'remove'): Promise<void>
   setPreferences(patch: Partial<Preferences>): Promise<Preferences>
   chooseDirectory(): Promise<string | null>
   importSession(service: SessionService, cookie: string): Promise<void>

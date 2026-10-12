@@ -141,7 +141,7 @@
       await navigate('downloads')
     } catch (error) { notice(error) }
   }
-  async function action(task: Task, kind: 'pause' | 'resume' | 'cancel' | 'retry'): Promise<void> {
+  async function action(task: Task, kind: 'pause' | 'resume' | 'cancel' | 'retry' | 'remove'): Promise<void> {
     try { await window.nib.taskAction(task.id, kind) } catch (error) { notice(error) }
   }
   async function open(task: Task, folder: boolean): Promise<void> {
@@ -219,7 +219,7 @@
     <div class="supported"><small>{tr('supported')}</small><div><span>YouTube</span><span>Instagram</span><span>𝕏</span><span>TikTok</span></div></div>
   {:else if scene === 'downloads'}
     <section class="workspace downloads-workspace" aria-label={tr('downloads')}>
-      <div class="workspace-head"><div><h1>{tr('downloads')}</h1><p>{tr('queueCount', { count: tasks.length })}</p></div><div class="convert-action"><select aria-label={tr('convert')} bind:value={conversionFormat}><option value="mp4">{tr('videoMp4')}</option><option value="mkv">{tr('videoMkv')}</option><option value="mp3">{tr('audioMp3')}</option><option value="wav">{tr('audioWav')}</option></select><button class="text-button" onclick={convertFile}>{tr('convert')}</button></div></div>
+      <div class="workspace-head"><div><h1>{tr('downloads')}</h1><p>{tr('queueCount', { count: tasks.filter(t => t.state !== 'failed' && t.state !== 'canceled').length })}</p></div><div class="convert-action"><select aria-label={tr('convert')} bind:value={conversionFormat}><option value="mp4">{tr('videoMp4')}</option><option value="mkv">{tr('videoMkv')}</option><option value="mp3">{tr('audioMp3')}</option><option value="wav">{tr('audioWav')}</option></select><button class="text-button" onclick={convertFile}>{tr('convert')}</button></div></div>
       <div class="status-line"><span>{tr('all')} · {tasks.length}</span><span>{tr('downloading')} · {tasks.filter(t => t.state === 'transferring').length}</span><span>{tr('processing')} · {tasks.filter(t => t.state === 'processing' || t.state === 'finalizing').length}</span><span>{tr('needsHelp')} · {tasks.filter(t => t.state === 'failed').length}</span></div>
       <div class="task-list">
         {#if tasks.length === 0}<div class="empty-state">{tr('emptyQueue')}<br /><small>{tr('emptyQueueHint')}</small></div>{/if}
@@ -230,7 +230,7 @@
               <div class="task-bottom"><span>{task.state === 'failed' ? errorText(task) : status(task)}</span><span>{task.bytesReceived ? formatBytes(task.bytesReceived) : ''}{task.bytesTotal ? ` / ${formatBytes(task.bytesTotal)}` : ''}{task.progress !== null && task.state === 'transferring' ? ` · ${Math.round(task.progress * 100)}%` : ''}</span></div>
               {#if task.state === 'failed'}<div class="failure-actions"><button onclick={() => action(task, 'retry')}>{tr('retry')}</button>{#if /private|login|age|session/.test(task.errorCode || '')}<button onclick={() => navigate('settings')}>{tr('checkSession')}</button>{/if}{#if task.errorCode === 'disk.permission' || task.errorCode === 'disk.full'}<button onclick={chooseDirectory}>{tr('chooseFolder')}</button>{/if}{#if task.error}<details><summary>{tr('errorDetails')}</summary><code>{task.error}</code></details>{/if}</div>{/if}
             </div>
-            <div class="row-actions">{#if task.state === 'transferring'}<button aria-label={tr('pause')} title={tr('pause')} onclick={() => action(task, 'pause')}>Ⅱ</button>{/if}{#if task.state === 'paused'}<button aria-label={tr('resume')} title={tr('resume')} onclick={() => action(task, 'resume')}>▶</button>{/if}{#if task.state === 'canceled'}<button aria-label={tr('retry')} title={tr('retry')} onclick={() => action(task, 'retry')}>↻</button>{/if}{#if !['completed', 'canceled'].includes(task.state)}<button aria-label={tr('cancel')} title={tr('cancel')} onclick={() => action(task, 'cancel')}>×</button>{/if}</div>
+            <div class="row-actions">{#if task.state === 'transferring'}<button aria-label={tr('pause')} title={tr('pause')} onclick={() => action(task, 'pause')}>Ⅱ</button>{/if}{#if task.state === 'paused'}<button aria-label={tr('resume')} title={tr('resume')} onclick={() => action(task, 'resume')}>▶</button>{/if}{#if task.state === 'canceled'}<button aria-label={tr('retry')} title={tr('retry')} onclick={() => action(task, 'retry')}>↻</button>{/if}{#if task.state === 'failed' || task.state === 'canceled'}<button class="remove-task" aria-label={tr('remove')} title={tr('remove')} onclick={() => action(task, 'remove')}>{tr('remove')}</button>{/if}{#if !['completed', 'canceled', 'failed'].includes(task.state)}<button aria-label={tr('cancel')} title={tr('cancel')} onclick={() => action(task, 'cancel')}>×</button>{/if}</div>
           </article>
         {/each}
       </div>

@@ -20,6 +20,7 @@ function testStore(records: Map<string, Task>): Store {
   return {
     saveTask(task: Task) { records.set(task.id, structuredClone(task)) },
     getTask(id: string) { return records.get(id) },
+    deleteTask(id: string) { records.delete(id) },
     tasks() { return [...records.values()] },
     getPreferences() { return { downloadDirectory: folder, videoQuality: 'max', audioFormat: 'best', reducedMotion: false, locale: 'system', tutorialSeenVersion: 0 } }
   } as Store
@@ -51,6 +52,20 @@ it('reports an empty Cobalt tunnel before sending it to FFmpeg', async () => {
   expect(records.get(id)?.errorCode).toBe('media.empty')
   expect(records.get(id)?.error).toBe('The source returned an empty media file')
   expect(readdirSync(folder)).toEqual([])
+})
+
+it('removes a failed task from Downloads without touching completed files', async () => {
+  const records = new Map<string, Task>()
+  const engine = { request: async () => ({ status: 'redirect', url: 'https://example.com/media', filename: 'clip.mp4' }) } as unknown as CobaltEngine
+  vi.stubGlobal('fetch', async () => new Response(null, { status: 503 }))
+  let changes = 0
+  const downloads = new Downloads(testStore(records), engine, () => {}, 'ffmpeg', () => changes++)
+  const id = downloads.submit('https://example.com/post', 'video')
+  expect(() => downloads.action(id, 'remove')).toThrow('Only failed or canceled tasks can be removed')
+  await waitFor(() => records.get(id)?.state === 'failed')
+  downloads.action(id, 'remove')
+  expect(records.has(id)).toBe(false)
+  expect(changes).toBe(1)
 })
 
 it('pauses and resumes a transfer without losing received bytes', async () => {
