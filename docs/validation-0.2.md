@@ -24,3 +24,9 @@ The [final manual Windows installer smoke run](https://github.com/lucassperess/n
 The automatic push trigger was disabled after repeated packaging failures caused unnecessary GitHub failure emails. Future installer runs require manual dispatch. Authenticated services and interrupted transfers still require separate service-specific follow-up evidence; the successful 41.6 MB video covers a moderate file, not a multi-gigabyte transfer.
 
 The private [v0.2.0 preview](https://github.com/lucassperess/nib/releases/tag/v0.2.0) uses the installer from that successful run, built from commit `bbc4a661fb6f4df0bd2ba5e33433eee72ea1fddf`. The published asset is 161,249,681 bytes and has SHA-256 `1D2EFDDF3B25A759833CD8E61342D8445BAEEAAB016E88AB25D4A961300241F5`.
+
+## Local 0.2.1 candidate
+
+The local `Nib Setup 0.2.1.exe` installs into a separate directory and starts with a fresh profile. Its sandboxed bridge reported version 0.2.1 and the engine became ready. The packaged app then completed a real Streamable video (41,600,053 bytes) and audio (710,072 bytes) with no fallback attempts. The fresh-profile startup took 39,126 ms on this PC. SHA-256: `EFEC17DBECC63839C2D15BAFFB2F329A390BCE186C0933465315E97AA83416B8`.
+
+This candidate adds removal of failed and canceled entries from Downloads and rejects empty Cobalt media streams before FFmpeg. The specific YouTube video reported by the user still receives empty streams from the pinned Cobalt runtime; this candidate improves the error message but does not restore that download.

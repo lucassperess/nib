@@ -25,7 +25,7 @@ jobs:
       - name: Install and test without external Node or pnpm
         shell: pwsh
         run: |
-          $setup = Get-ChildItem release -Filter 'Nib Setup 0.2.0.exe' | Select-Object -First 1
+          $setup = Get-ChildItem release -Filter 'Nib Setup 0.2.1.exe' | Select-Object -First 1
           if (-not $setup) { throw 'Installer not found' }
           $install = Join-Path $env:RUNNER_TEMP 'nib-smoke-install'
           $installed = Join-Path $install 'Nib.exe'
@@ -46,4 +46,4 @@ jobs:
           name: nib-windows-smoke
           path: |
             ${{ runner.temp }}/nib-smoke-data/smoke-report.json
-            release/Nib Setup 0.2.0.exe
+            release/Nib Setup 0.2.1.exe
