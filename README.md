@@ -4,6 +4,8 @@ Nib is a Windows x64 desktop companion for saving media from links. Its interfac
 
 ![Nib Home, with the link field, Video and Audio choices, and the mascot](docs/screenshots/home.png)
 
+[Veja as três telas principais antes de instalar](docs/SCREENS.md).
+
 ## Baixar e instalar — sem terminal
 
 1. Abra a página de [Releases do Nib](https://github.com/lucassperess/nib/releases/latest).

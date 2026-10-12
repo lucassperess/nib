@@ -27,6 +27,8 @@ O Nib guarda suas preferências e o Histórico no seu perfil do Windows. Instala
 
 ![Downloads do Nib: aqui aparecem as tarefas em andamento](screenshots/downloads.png)
 
+![Histórico do Nib: somente arquivos concluídos aparecem aqui](screenshots/history.png)
+
 Para converter um arquivo que já está no computador, use **Converter arquivo** na Home, escolha o formato e acompanhe a tarefa em Downloads. O original é preservado. O tutorial também mostra onde importar uma sessão privada quando um site exigir acesso à sua conta; isso é opcional para links públicos.
 
 ## Se algo não funcionar
