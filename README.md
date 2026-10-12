@@ -7,8 +7,8 @@ The repository is private for now but documented for eventual publication. A lic
 ## First use
 
 1. Install a validated build from the private [Releases](https://github.com/lucassperess/nib/releases) page on Windows x64.
-2. Follow or skip Nib's three-step tour. **Settings → Help → Replay the tour** is always available.
-3. Paste or drop a media link on Home and choose Video or Audio.
+2. Follow or skip Nib's five-step tour, including local file conversion and private sessions. **Settings → Help → Replay the tour** is always available.
+3. Paste or drop a media link on Home and choose Video or Audio. **Convert a file** on Home opens a separate local workflow.
 4. Follow the task in Downloads. Select items if a link resolves to multiple media items.
 5. Open finished files from History. Failed and canceled tasks stay in Downloads until removed; neither appears in History.
 
@@ -29,7 +29,7 @@ Site availability, available qualities, and formats depend on the source. Cookie
 | FFmpeg | Merges or converts streams when needed. |
 | SQLite | Stores task metadata, History, tutorial version, and preferences in the user's profile. Media stays in the chosen download folder. |
 
-At most two downloads run concurrently. Each task uses a temporary directory, then an asynchronous exclusive copy to its final filename. Existing files are never overwritten. History contains only completed tasks. Interrupted tasks are queued for a fresh attempt after restart. The renderer receives task changes rather than rebuilding the full History on every progress update.
+At most two tasks run concurrently. Each task uses a temporary directory, then an asynchronous exclusive copy to its final filename. Existing files are never overwritten. Local conversions preserve the original and appear in Downloads while running and History after completion. History contains only completed tasks. Interrupted tasks are queued for a fresh attempt after restart. The renderer receives task changes rather than rebuilding the full History on every progress update. Downloaded bytes and an overall total appear when the extractor reports reliable sizes; otherwise Nib labels the total as unavailable.
 
 ## Development and build
 

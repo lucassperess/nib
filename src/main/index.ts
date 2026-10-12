@@ -1,7 +1,6 @@
 import { app, BrowserWindow, dialog, ipcMain, shell } from 'electron'
-import { join, dirname, extname, parse } from 'node:path'
-import { existsSync, mkdirSync, rmSync } from 'node:fs'
-import { spawn } from 'node:child_process'
+import { basename, join } from 'node:path'
+import { existsSync, mkdirSync } from 'node:fs'
 import { randomUUID } from 'node:crypto'
 import { writeFile } from 'node:fs/promises'
 import type { AppSnapshot, ConversionFormat, HistoryQuery, MediaMode, Preferences, SessionService, Task } from '../shared/types'
@@ -19,6 +18,8 @@ let engineState: AppSnapshot['engine'] = 'starting'
 let engineError = ''
 const startedAt = Date.now()
 let startupMs: number | null = null
+const smokeTransferSamples: Array<{ received: number; total: number | null; kind: Task['totalKind']; fraction: number | null }> = []
+let pendingConversion: { token: string; inputPath: string } | null = null
 const smokeDirectory = process.argv.includes('--nib-smoke') ? process.env.NIB_SMOKE_DIR : undefined
 if (smokeDirectory) { mkdirSync(smokeDirectory, { recursive: true }); app.setPath('userData', smokeDirectory) }
 
@@ -31,16 +32,16 @@ function snapshot(): AppSnapshot {
 }
 function publish(): void { if (window && !window.isDestroyed()) window.webContents.send('nib:snapshot', snapshot()) }
 function publishTask(task: Task): void {
+  if (smokeDirectory && task.state === 'transferring' && smokeTransferSamples.length < 100) {
+    smokeTransferSamples.push({ received: task.bytesReceived, total: task.bytesTotal, kind: task.totalKind, fraction: task.progress })
+  }
   if (!window || window.isDestroyed()) return
   window.webContents.send('nib:task', task)
   if (task.state === 'completed') publish()
 }
-function ffmpegPath(): string {
-  return engine.ffmpeg
-}
 function createWindow(): void {
   window = new BrowserWindow({
-    width: 1380, height: 820, minWidth: 920, minHeight: 620, show: !smokeDirectory,
+    width: 1380, height: 820, minWidth: 920, minHeight: 620, show: !smokeDirectory || process.env.NIB_CAPTURE_SCENES === '1',
     backgroundColor: '#100b20', title: 'Nib', autoHideMenuBar: true,
     webPreferences: { preload: join(__dirname, '../preload/index.cjs'), nodeIntegration: false, contextIsolation: true, sandbox: true }
   })
@@ -100,28 +101,18 @@ function registerIpc(): void {
     if (folder) shell.showItemInFolder(path)
     else { const error = await shell.openPath(path); if (error) throw new Error(error) }
   })
-  handle('nib:convert-file', async (format: ConversionFormat) => {
-    if (!['mp4', 'mkv', 'mp3', 'wav'].includes(format)) throw new Error('Choose an output format')
-    const picked = await dialog.showOpenDialog(window!, { properties: ['openFile'], filters: [{ name: 'Media', extensions: ['mp4','mkv','mov','webm','m4a','mp3','aac','ogg'] }] })
+  handle('nib:pick-conversion-file', async () => {
+    const picked = await dialog.showOpenDialog(window!, { properties: ['openFile'], filters: [{ name: 'Media', extensions: ['mp4','mkv','mov','webm','m4a','mp3','aac','ogg','wav'] }] })
     if (picked.canceled) return null
-    const input = picked.filePaths[0], parsed = parse(input)
-    let output = join(dirname(input), `${parsed.name}-converted.${format}`)
-    if (existsSync(output)) output = join(dirname(input), `${parsed.name}-converted-${randomUUID().slice(0, 6)}.${format}`)
-    const run = (options: string[]) => new Promise<void>((resolve, reject) => {
-      const child = spawn(ffmpegPath(), ['-hide_banner', '-n', '-i', input, ...options, output], { windowsHide: true })
-      let error = ''
-      child.stderr?.on('data', chunk => { error = (error + String(chunk)).slice(-800) })
-      child.once('error', reject)
-      child.once('close', code => code === 0 ? resolve() : reject(new Error(`Could not convert this file: ${error}`)))
-    })
-    const sameFormat = extname(input).toLowerCase() === `.${format}`
-    if (sameFormat) { await run(['-map', '0', '-c', 'copy']); return { path: output, method: 'copy' } }
-    if (format === 'mp4' || format === 'mkv') {
-      try { await run(['-map', '0', '-c', 'copy']); return { path: output, method: 'copy' } }
-      catch { rmSync(output, { force: true }); await run(['-c:v', 'libx264', '-c:a', 'aac']); return { path: output, method: 'converted' } }
-    }
-    await run(format === 'mp3' ? ['-vn', '-c:a', 'libmp3lame', '-q:a', '2'] : ['-vn', '-c:a', 'pcm_s16le'])
-    return { path: output, method: 'converted' }
+    pendingConversion = { token: randomUUID(), inputPath: picked.filePaths[0] }
+    return { token: pendingConversion.token, name: basename(pendingConversion.inputPath) }
+  })
+  handle('nib:convert-file', (token: string, format: ConversionFormat) => {
+    if (!['mp4', 'mkv', 'mp3', 'wav'].includes(format)) throw new Error('Choose an output format')
+    if (!pendingConversion || pendingConversion.token !== token) throw new Error('Choose a file first')
+    const input = pendingConversion.inputPath
+    pendingConversion = null
+    return downloads.convert(input, format)
   })
   handle('nib:open-releases', () => shell.openExternal('https://github.com/lucassperess/nib/releases'))
   handle('nib:restart-engine', async () => {
@@ -153,7 +144,7 @@ app.whenReady().then(async () => {
   app.setAppUserModelId('dev.nib.desktop')
   const directory = app.getPath('userData')
   store = new Store(directory, app.getPath('downloads'))
-  if (smokeDirectory) store.setPreferences({ ...store.getPreferences(), downloadDirectory: join(directory, 'downloads'), tutorialSeenVersion: 1 })
+  if (smokeDirectory) store.setPreferences({ ...store.getPreferences(), downloadDirectory: join(directory, 'downloads'), tutorialSeenVersion: 2 })
   sessions = new Sessions(directory)
   engine = new MediaEngine(directory)
   downloads = new Downloads(store, engine, sessions, publishTask, publish)
@@ -173,6 +164,27 @@ app.whenReady().then(async () => {
       const bridge = await window!.webContents.executeJavaScript('window.nib.snapshot().then(s => ({ version: s.appVersion, engine: s.engine }))')
       if (bridge.version !== app.getVersion() || bridge.engine !== 'ready') throw new Error('Sandboxed preload bridge failed')
       report.bridge = bridge
+      if (process.env.NIB_CAPTURE_SCENES === '1') {
+        report.layout = await window!.webContents.executeJavaScript("({ viewport: innerWidth, wordmark: document.querySelector('.hero-logo-frame')?.getBoundingClientRect().width })")
+        for (const [name, index] of [['home', 0], ['downloads', 1], ['history', 2], ['settings', 3]] as const) {
+          if (index) await window!.webContents.executeJavaScript(`document.querySelectorAll('nav button')[${index}].click()`)
+          await new Promise(resolve => setTimeout(resolve, 900))
+          await writeFile(join(directory, `smoke-${name}.png`), (await window!.capturePage()).toPNG())
+        }
+        await window!.webContents.executeJavaScript("document.querySelector('.help-block .path-button').click()")
+        for (let step = 1; step < 5; step++) {
+          await new Promise(resolve => setTimeout(resolve, 450))
+          await window!.webContents.executeJavaScript("document.querySelector('.tour-card button.primary').click()")
+        }
+        await new Promise(resolve => setTimeout(resolve, 900))
+        await writeFile(join(directory, 'smoke-tour-sessions.png'), (await window!.capturePage()).toPNG())
+        await window!.webContents.executeJavaScript("document.querySelector('.tour-card button:first-child').click()")
+        await new Promise(resolve => setTimeout(resolve, 500))
+        window!.setSize(920, 620)
+        await window!.webContents.executeJavaScript("document.querySelectorAll('nav button')[0].click()")
+        await new Promise(resolve => setTimeout(resolve, 900))
+        await writeFile(join(directory, 'smoke-home-small.png'), (await window!.capturePage()).toPNG())
+      }
       const sources = [
         { name: 'youtube', url: 'https://www.youtube.com/watch?v=jNQXAC9IVRw' },
         { name: 'streamable', url: 'https://streamable.com/p9cln4' }
@@ -199,6 +211,26 @@ app.whenReady().then(async () => {
         }
         if (!report[mode]) throw new Error(`${mode} failed: ${attempts.filter(attempt => attempt.mode === mode).map(attempt => `${attempt.source}:${attempt.code}`).join(', ')}`)
       }
+      report.transferSamples = smokeTransferSamples
+      const input = join(directory, 'conversion-smoke.wav')
+      const pcm = Buffer.alloc(3200)
+      const header = Buffer.alloc(44)
+      header.write('RIFF', 0); header.writeUInt32LE(36 + pcm.length, 4); header.write('WAVEfmt ', 8)
+      header.writeUInt32LE(16, 16); header.writeUInt16LE(1, 20); header.writeUInt16LE(1, 22)
+      header.writeUInt32LE(16000, 24); header.writeUInt32LE(32000, 28)
+      header.writeUInt16LE(2, 32); header.writeUInt16LE(16, 34)
+      header.write('data', 36); header.writeUInt32LE(pcm.length, 40)
+      await writeFile(input, Buffer.concat([header, pcm]))
+      const conversionId = downloads.convert(input, 'wav')
+      const conversionDeadline = Date.now() + 30_000
+      let conversion: Task | undefined
+      do {
+        conversion = store.getTask(conversionId)
+        if (conversion?.state === 'completed' || conversion?.state === 'failed') break
+        await new Promise(resolve => setTimeout(resolve, 100))
+      } while (Date.now() < conversionDeadline)
+      if (conversion?.state !== 'completed' || !conversion.outputPath || !existsSync(conversion.outputPath) || !existsSync(input)) throw new Error(`Conversion failed: ${conversion?.errorCode || conversion?.state}`)
+      report.conversion = { bytes: conversion.bytesReceived }
       report.ok = true
     } catch (error) { report.ok = false; report.failure = String(error) }
     await writeFile(join(directory, 'smoke-report.json'), JSON.stringify(report, null, 2), 'utf8')

@@ -5,6 +5,7 @@ export type Scene = 'home' | 'downloads' | 'history' | 'settings'
 
 export interface Task {
   id: string
+  kind?: 'download' | 'conversion'
   sourceUrl: string
   title: string
   service: string
@@ -13,6 +14,7 @@ export interface Task {
   state: TaskState
   bytesReceived: number
   bytesTotal: number | null
+  totalKind?: 'exact' | 'estimated' | 'unknown'
   progress: number | null
   stage: string
   error: string | null
@@ -23,6 +25,7 @@ export interface Task {
   completedAt: string | null
   pickerItems?: PickerItem[]
   pickerIndex?: number
+  conversion?: { inputPath: string; outputFormat: ConversionFormat }
 }
 
 export interface PickerItem { type: 'photo' | 'video' | 'gif'; url: string; thumb?: string }
@@ -52,7 +55,8 @@ export interface NibApi {
   clearSession(service: SessionService): Promise<void>
   clearHistory(): Promise<void>
   openPath(path: string, folder: boolean): Promise<void>
-  convertFile(format: ConversionFormat): Promise<{ path: string; method: 'copy' | 'converted' } | null>
+  pickConversionFile(): Promise<{ token: string; name: string } | null>
+  convertFile(token: string, format: ConversionFormat): Promise<string>
   exportDiagnostics(): Promise<string | null>
   openReleases(): Promise<void>
   restartEngine(): Promise<void>

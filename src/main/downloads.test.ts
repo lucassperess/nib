@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, expect, it } from 'vitest'
-import { existsSync, mkdtempSync, readdirSync, rmSync } from 'node:fs'
+import { existsSync, mkdtempSync, readdirSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { isAbsolute, join, relative, resolve } from 'node:path'
 import { Downloads } from './downloads'
@@ -7,6 +7,7 @@ import type { Task } from '../shared/types'
 import type { Store } from './store'
 import type { MediaEngine } from './engine'
 import type { Sessions } from './sessions'
+import ffmpeg from 'ffmpeg-static'
 
 const fakeCli = `
 const fs = require('node:fs');
@@ -42,7 +43,7 @@ function fixture(): { downloads: Downloads; records: Map<string, Task> } {
     tasks() { return [...records.values()] },
     getPreferences() { return { downloadDirectory: folder, videoQuality: 'max', audioFormat: 'best', reducedMotion: false, locale: 'system', tutorialSeenVersion: 0 } }
   } as Store
-  const engine = { binary: process.execPath, commonArgs: () => ['-e', fakeCli, '--'] } as unknown as MediaEngine
+  const engine = { binary: process.execPath, ffmpeg, commonArgs: () => ['-e', fakeCli, '--'] } as unknown as MediaEngine
   const sessions = { materializeFor: () => null } as unknown as Sessions
   return { records, downloads: new Downloads(store, engine, sessions, () => {}) }
 }
@@ -68,6 +69,25 @@ it('keeps a failed task removable without affecting completed downloads', async 
   downloads.action(failed, 'remove')
   expect(records.has(failed)).toBe(false)
   expect(records.get(good)?.outputPath && existsSync(records.get(good)!.outputPath!)).toBe(true)
+})
+
+it('queues a local conversion, keeps the original and adds the result to completed tasks', async () => {
+  const { downloads, records } = fixture()
+  const input = join(folder, 'original.wav')
+  const pcm = Buffer.alloc(3200)
+  const header = Buffer.alloc(44)
+  header.write('RIFF', 0); header.writeUInt32LE(36 + pcm.length, 4); header.write('WAVEfmt ', 8)
+  header.writeUInt32LE(16, 16); header.writeUInt16LE(1, 20); header.writeUInt16LE(1, 22)
+  header.writeUInt32LE(16000, 24); header.writeUInt32LE(32000, 28)
+  header.writeUInt16LE(2, 32); header.writeUInt16LE(16, 34)
+  header.write('data', 36); header.writeUInt32LE(pcm.length, 40)
+  writeFileSync(input, Buffer.concat([header, pcm]))
+  const id = downloads.convert(input, 'wav')
+  await waitFor(() => ['completed', 'failed'].includes(records.get(id)?.state || ''))
+  expect(records.get(id)?.state).toBe('completed')
+  expect(records.get(id)?.kind).toBe('conversion')
+  expect(existsSync(input)).toBe(true)
+  expect(records.get(id)?.outputPath && existsSync(records.get(id)!.outputPath!)).toBe(true)
 })
 
 async function waitFor(condition: () => boolean): Promise<void> {

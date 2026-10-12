@@ -2,11 +2,12 @@ import { spawn, type ChildProcess } from 'node:child_process'
 import { randomUUID } from 'node:crypto'
 import { constants, existsSync, mkdirSync, readdirSync } from 'node:fs'
 import { copyFile, mkdir, rm, stat } from 'node:fs/promises'
-import { basename, extname, isAbsolute, join, parse, relative, resolve } from 'node:path'
-import type { MediaMode, PickerItem, Preferences, Task } from '../shared/types'
+import { basename, dirname, extname, isAbsolute, join, parse, relative, resolve } from 'node:path'
+import type { ConversionFormat, MediaMode, PickerItem, Task } from '../shared/types'
 import { Store } from './store'
 import { MediaEngine } from './engine'
 import { Sessions } from './sessions'
+import { TransferProgressTracker } from './progress'
 
 type Control = { process?: ChildProcess; paused: boolean; canceled: boolean }
 type MediaInfo = { title?: string; ext?: string; entries?: Array<{ title?: string; url?: string; thumbnail?: string; ext?: string }> }
@@ -71,11 +72,25 @@ export class Downloads {
     if (!['http:', 'https:'].includes(parsed.protocol)) throw new Error('Paste an HTTP or HTTPS link')
     const now = new Date().toISOString()
     const task: Task = {
-      id: randomUUID(), sourceUrl: normalized, title: sourceName(normalized), service: sourceName(normalized),
-      mode, mediaType: mode, state: 'queued', bytesReceived: 0, bytesTotal: null, progress: null,
+      id: randomUUID(), kind: 'download', sourceUrl: normalized, title: sourceName(normalized), service: sourceName(normalized),
+      mode, mediaType: mode, state: 'queued', bytesReceived: 0, bytesTotal: null, totalKind: 'unknown', progress: null,
       stage: 'Waiting', error: null, outputPath: null, createdAt: now, updatedAt: now, completedAt: null, pickerIndex
     }
     this.save(task); this.pump(); return task.id
+  }
+
+  convert(inputPath: string, format: ConversionFormat): string {
+    const id = randomUUID()
+    const now = new Date().toISOString()
+    const audio = format === 'mp3' || format === 'wav'
+    const task: Task = {
+      id, kind: 'conversion', sourceUrl: '', title: parse(inputPath).name, service: 'Local file',
+      mode: audio ? 'audio' : 'video', mediaType: audio ? 'audio' : 'video', state: 'queued',
+      bytesReceived: 0, bytesTotal: null, totalKind: 'unknown', progress: null, stage: 'Waiting',
+      error: null, outputPath: null, createdAt: now, updatedAt: now, completedAt: null,
+      conversion: { inputPath, outputFormat: format }
+    }
+    this.save(task); this.pump(); return id
   }
 
   select(id: string, indexes: number[]): void {
@@ -119,7 +134,8 @@ export class Downloads {
         if (task.state !== 'queued' || this.active.has(task.id)) continue
         const control: Control = { paused: false, canceled: false }
         this.active.set(task.id, control)
-        void this.run(task, control).finally(() => { this.active.delete(task.id); this.pump() })
+        void (task.kind === 'conversion' ? this.runConversion(task, control) : this.run(task, control))
+          .finally(() => { this.active.delete(task.id); this.pump() })
       }
     })
   }
@@ -145,9 +161,12 @@ export class Downloads {
       }
       task.title = safeFilename(info.entries?.[task.pickerIndex ?? -1]?.title || info.title || task.title)
       this.save(task)
-      const args = [...this.engine.commonArgs(), '--newline', '--progress', '--progress-template', 'download:NIB_PROGRESS:%(progress.downloaded_bytes)s:%(progress.total_bytes)s',
+      const args = [...this.engine.commonArgs(), '--newline', '--progress',
+        '--print', 'before_dl:NIB_SELECTED:%(filesize)s:%(filesize_approx)s:%(requested_formats.0.filesize)s:%(requested_formats.1.filesize)s:%(requested_formats.2.filesize)s',
+        '--progress-template', 'download:NIB_PROGRESS:%(progress.downloaded_bytes)s:%(progress.total_bytes)s:%(progress.total_bytes_estimate)s:%(progress.speed)s:%(info.format_id)s',
         '--continue', '--retries', '3', '--fragment-retries', '3', '--concurrent-fragments', '4', '--no-mtime',
         '--paths', temp, '-o', `${task.id}.%(ext)s`]
+      if (process.argv.includes('--nib-smoke') && process.env.NIB_SMOKE_RATE) args.push('--limit-rate', process.env.NIB_SMOKE_RATE)
       if (sourceName(task.sourceUrl) === 'youtube.com' || sourceName(task.sourceUrl) === 'youtu.be') args.push('--no-playlist')
       if (cookies) args.push('--cookies', cookies)
       if (task.pickerIndex !== undefined) args.push('--playlist-items', String(task.pickerIndex + 1))
@@ -158,7 +177,8 @@ export class Downloads {
         if (prefs.videoQuality !== 'max') args.push('-S', `res:${prefs.videoQuality}`)
       }
       args.push('--', task.sourceUrl)
-      task.state = 'transferring'; task.stage = 'Downloading'; task.progress = null; this.save(task)
+      task.state = 'transferring'; task.stage = 'Downloading'; task.progress = null
+      task.bytesReceived = 0; task.bytesTotal = null; task.totalKind = 'unknown'; this.save(task)
       await this.downloadProcess(task, control, args)
       if (control.paused) { keepTemp = true; return }
       if (control.canceled) return
@@ -194,19 +214,85 @@ export class Downloads {
     }
   }
 
+  private async runConversion(task: Task, control: Control): Promise<void> {
+    const conversion = task.conversion
+    if (!conversion) throw new Error('Conversion details are missing')
+    const input = conversion.inputPath
+    const format = conversion.outputFormat
+    const directory = dirname(input)
+    const temp = tempDirectory(directory, task.id)
+    try {
+      if (!existsSync(input)) throw new DownloadError('file.missing', 'The original file could not be found')
+      await mkdir(temp, { recursive: true })
+      const target = join(temp, `converted.${format}`)
+      task.state = 'processing'; task.stage = 'Converting file'; task.progress = null
+      task.bytesReceived = 0; task.bytesTotal = null; task.totalKind = 'unknown'; this.save(task)
+      const sameFormat = extname(input).toLowerCase() === `.${format}`
+      const audioOptions = format === 'mp3' ? ['-vn', '-c:a', 'libmp3lame', '-q:a', '2'] : ['-vn', '-c:a', 'pcm_s16le']
+      if (sameFormat || format === 'mp4' || format === 'mkv') {
+        try { await this.ffmpegConvert(input, target, ['-map', '0', '-c', 'copy'], control) }
+        catch (error) {
+          if (control.canceled || sameFormat) throw error
+          await rm(target, { force: true })
+          await this.ffmpegConvert(input, target, ['-c:v', 'libx264', '-c:a', 'aac'], control)
+        }
+      } else await this.ffmpegConvert(input, target, audioOptions, control)
+      if (control.canceled) return
+      if (!existsSync(target) || (await stat(target)).size === 0) throw new DownloadError('media.empty', 'Conversion produced no file')
+      task.state = 'finalizing'; task.stage = 'Saving file'; this.save(task)
+      const filename = safeFilename(`${parse(input).name}-converted.${format}`)
+      let destination = outputPath(directory, filename)
+      for (;;) {
+        try { await copyFile(target, destination, constants.COPYFILE_EXCL); break }
+        catch (error) {
+          if ((error as NodeJS.ErrnoException).code !== 'EEXIST') throw error
+          destination = outputPath(directory, filename)
+        }
+      }
+      if (control.canceled) { await rm(destination, { force: true }); return }
+      task.outputPath = destination; task.title = parse(destination).name
+      task.state = 'completed'; task.stage = 'Ready to open'; task.completedAt = new Date().toISOString()
+      task.bytesReceived = (await stat(destination)).size; task.bytesTotal = task.bytesReceived
+      task.totalKind = 'exact'; task.progress = 1; this.save(task)
+    } catch (error) {
+      if (!control.canceled) {
+        task.state = 'failed'
+        task.errorCode = error instanceof DownloadError ? error.code : (error as NodeJS.ErrnoException)?.code === 'ENOSPC' ? 'disk.full' : 'media.failed'
+        task.error = error instanceof Error ? safeDetail(error.message) : 'Could not convert this file'
+        task.stage = 'Could not finish'; task.progress = null; this.save(task)
+      }
+    } finally { await rm(temp, { recursive: true, force: true }) }
+  }
+
+  private ffmpegConvert(input: string, output: string, options: string[], control: Control): Promise<void> {
+    return new Promise((resolveTask, reject) => {
+      const child = spawn(this.engine.ffmpeg, ['-hide_banner', '-n', '-i', input, ...options, output], { windowsHide: true })
+      control.process = child
+      let stderr = ''
+      child.stderr?.on('data', chunk => { stderr = (stderr + String(chunk)).slice(-1600) })
+      child.once('error', reject)
+      child.once('close', code => {
+        control.process = undefined
+        if (control.canceled || code === 0) { resolveTask(); return }
+        reject(new DownloadError('media.processing', safeDetail(stderr.split(/\r?\n/).filter(Boolean).at(-1) || 'Could not convert this file')))
+      })
+    })
+  }
+
   private downloadProcess(task: Task, control: Control, args: string[]): Promise<void> {
     return new Promise((resolveTask, reject) => {
       const child = spawn(this.engine.binary, args, { windowsHide: true })
       control.process = child
       let stderr = '', lineBuffer = '', lastUpdate = 0
+      const tracker = new TransferProgressTracker()
       const consume = (line: string) => {
-        const progress = line.match(/NIB_PROGRESS:(\d+):(?:(\d+)|NA)/)
+        const progress = tracker.consume(line)
         if (progress) {
-          const received = Number(progress[1]), total = Number(progress[2])
-          task.bytesReceived = received
-          task.bytesTotal = Number.isFinite(total) && total > 0 ? total : null
-          task.progress = task.bytesTotal ? Math.min(received / task.bytesTotal, 1) : null
-          if (Date.now() - lastUpdate > 250) { this.save(task); lastUpdate = Date.now() }
+          task.bytesReceived = progress.received
+          task.bytesTotal = progress.total
+          task.totalKind = progress.totalKind
+          task.progress = progress.fraction
+          if (Date.now() - lastUpdate > 250 || line.startsWith('NIB_SELECTED:')) { this.save(task); lastUpdate = Date.now() }
         } else if (/^\[(Merger|ExtractAudio|VideoRemuxer|Fixup)/.test(line) && task.state !== 'processing') {
           task.state = 'processing'; task.stage = 'Finishing your file'; task.progress = null; this.save(task)
         }
@@ -222,7 +308,7 @@ export class Downloads {
       child.once('close', code => {
         control.process = undefined
         if (control.paused || control.canceled) { resolveTask(); return }
-        if (code === 0) { resolveTask(); return }
+        if (code === 0) { this.save(task); resolveTask(); return }
         const last = stderr.split(/\r?\n/).filter(Boolean).at(-1) || 'Could not download this media'
         reject(new DownloadError(classifyError(stderr), safeDetail(last)))
       })
