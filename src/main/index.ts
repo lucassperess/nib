@@ -7,13 +7,13 @@ import { writeFile } from 'node:fs/promises'
 import type { AppSnapshot, ConversionFormat, HistoryQuery, MediaMode, Preferences, SessionService, Task } from '../shared/types'
 import { Store } from './store'
 import { Sessions } from './sessions'
-import { CobaltEngine } from './engine'
+import { MediaEngine } from './engine'
 import { Downloads } from './downloads'
 
 let window: BrowserWindow | null = null
 let store: Store
 let sessions: Sessions
-let engine: CobaltEngine
+let engine: MediaEngine
 let downloads: Downloads
 let engineState: AppSnapshot['engine'] = 'starting'
 let engineError = ''
@@ -26,7 +26,7 @@ function snapshot(): AppSnapshot {
   return {
     tasks: store.activeTasks(),
     history: store.history({ limit: 50 }).items,
-    preferences: store.getPreferences(), sessions: sessions.status(), engine: engineState, engineError, appVersion: app.getVersion()
+    preferences: store.getPreferences(), sessions: sessions.status(), engine: engineState, engineError, appVersion: app.getVersion(), extractorVersion: engine.version
   }
 }
 function publish(): void { if (window && !window.isDestroyed()) window.webContents.send('nib:snapshot', snapshot()) }
@@ -36,9 +36,7 @@ function publishTask(task: Task): void {
   if (task.state === 'completed') publish()
 }
 function ffmpegPath(): string {
-  const cobalt = engine.root
-  const binary = join(cobalt, 'node_modules', 'ffmpeg-static', 'ffmpeg.exe')
-  return existsSync(binary) ? binary : 'ffmpeg'
+  return engine.ffmpeg
 }
 function createWindow(): void {
   window = new BrowserWindow({
@@ -85,17 +83,15 @@ function registerIpc(): void {
   handle('nib:import-session', async (service: SessionService, cookie: string) => {
     if (downloads.busy()) throw new Error('Wait for active downloads before changing sessions')
     sessions.import(service, cookie)
-    engineState = 'starting'; publish()
-    try { await engine.restart(); engineState = 'ready'; engineError = '' }
-    catch (error) { engineState = 'error'; engineError = String(error) }
     publish()
   })
   handle('nib:clear-session', async (service: SessionService) => {
     if (downloads.busy()) throw new Error('Wait for active downloads before changing sessions')
-    sessions.clear(service); engineState = 'starting'; publish()
-    try { await engine.restart(); engineState = 'ready'; engineError = '' }
-    catch (error) { engineState = 'error'; engineError = String(error) }
-    publish()
+    sessions.clear(service); publish()
+  })
+  handle('nib:update-engine', async () => {
+    if (downloads.busy()) throw new Error('Wait for active downloads before updating the extractor')
+    const version = await engine.update(); publish(); return version
   })
   handle('nib:clear-history', () => { store.clearHistory(); publish() })
   handle('nib:open-path', async (path: string, folder: boolean) => {
@@ -159,8 +155,8 @@ app.whenReady().then(async () => {
   store = new Store(directory, app.getPath('downloads'))
   if (smokeDirectory) store.setPreferences({ ...store.getPreferences(), downloadDirectory: join(directory, 'downloads'), tutorialSeenVersion: 1 })
   sessions = new Sessions(directory)
-  engine = new CobaltEngine(sessions, directory)
-  downloads = new Downloads(store, engine, publishTask, ffmpegPath(), publish)
+  engine = new MediaEngine(directory)
+  downloads = new Downloads(store, engine, sessions, publishTask, publish)
   registerIpc(); createWindow()
   const rendererLoaded = new Promise<void>((resolve, reject) => {
     window!.webContents.once('did-finish-load', () => resolve())
@@ -178,8 +174,8 @@ app.whenReady().then(async () => {
       if (bridge.version !== app.getVersion() || bridge.engine !== 'ready') throw new Error('Sandboxed preload bridge failed')
       report.bridge = bridge
       const sources = [
-        { name: 'streamable', url: 'https://streamable.com/p9cln4' },
-        { name: 'youtube', url: 'https://www.youtube.com/watch?v=jNQXAC9IVRw' }
+        { name: 'youtube', url: 'https://www.youtube.com/watch?v=jNQXAC9IVRw' },
+        { name: 'streamable', url: 'https://streamable.com/p9cln4' }
       ]
       const attempts: Array<{ mode: MediaMode; source: string; code: string }> = []
       report.attempts = attempts

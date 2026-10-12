@@ -158,6 +158,12 @@
   async function importSession(): Promise<void> {
     try { await window.nib.importSession(cookieService, cookieInput); cookieInput = ''; message = tr('sessionSaved') } catch (error) { notice(error) }
   }
+  async function updateEngine(): Promise<void> {
+    try {
+      const version = await window.nib.updateEngine()
+      message = tr('extractorUpdated', { version })
+    } catch (error) { notice(error) }
+  }
   async function convertFile(): Promise<void> {
     try { const result = await window.nib.convertFile(conversionFormat); if (result) message = tr(result.method === 'copy' ? 'remuxed' : 'converted', { path: result.path }) } catch (error) { notice(error) }
   }
@@ -178,6 +184,7 @@
     const code = task.errorCode || task.error || ''
     if (code.includes('unsupported') || code.includes('invalid')) return tr('errorLink')
     if (/private|login|age|session/.test(code)) return tr('errorSession')
+    if (code === 'media.unavailable') return tr('errorUnavailable')
     if (code.includes('region')) return tr('errorRegion')
     if (code.includes('rate')) return tr('errorRate')
     if (code === 'disk.full') return tr('errorDisk')
@@ -252,6 +259,7 @@
         <div class="setting-grid"><label>{tr('videoQuality')}<select value={data?.preferences.videoQuality || 'max'} onchange={event => window.nib.setPreferences({ videoQuality: event.currentTarget.value as any })}><option value="max">{tr('bestAvailable')}</option><option value="2160">2160p</option><option value="1440">1440p</option><option value="1080">1080p</option><option value="720">720p</option><option value="480">480p</option></select></label><label>{tr('audioFormat')}<select value={data?.preferences.audioFormat || 'best'} onchange={event => window.nib.setPreferences({ audioFormat: event.currentTarget.value as any })}><option value="best">{tr('originalWhenPossible')}</option><option value="mp3">MP3</option><option value="ogg">OGG</option><option value="wav">WAV</option><option value="opus">Opus</option></select></label><label>{tr('language')}<select value={data?.preferences.locale || 'system'} onchange={event => window.nib.setPreferences({ locale: event.currentTarget.value as any })}><option value="system">{tr('systemLanguage')}</option><option value="pt-BR">{tr('portuguese')}</option><option value="en">{tr('english')}</option></select></label></div>
       </div><div class="settings-block"><h2>{tr('nib')}</h2><label class="check"><input type="checkbox" checked={data?.preferences.reducedMotion || false} onchange={event => window.nib.setPreferences({ reducedMotion: event.currentTarget.checked })} /> {tr('reduceMotion')}</label></div>
       <div class="settings-block"><h2>{tr('privateSessions')}</h2><p>{tr('sessionHelp')}</p><div class="session-status">Instagram {data?.sessions.instagram ? '●' : '○'} · YouTube {data?.sessions.youtube ? '●' : '○'} · X {data?.sessions.twitter ? '●' : '○'}</div><div class="session-form"><select bind:value={cookieService}><option value="instagram">Instagram</option><option value="youtube">YouTube</option><option value="twitter">X</option></select><input type="password" bind:value={cookieInput} placeholder={tr('pasteCookie')} autocomplete="off" /><button onclick={importSession}>{tr('import')}</button>{#if data?.sessions[cookieService]}<button class="text-button" onclick={() => window.nib.clearSession(cookieService)}>{tr('remove')}</button>{/if}</div></div>
+      <div class="settings-block"><h2>{tr('downloadEngine')}</h2><p>{tr('extractorVersion', { version: data?.extractorVersion || '—' })}</p><button class="path-button" onclick={updateEngine}>{tr('updateExtractor')} ↗</button><p>{tr('updateExtractorHelp')}</p></div>
       <div class="settings-block help-block"><h2>{tr('help')}</h2><button class="path-button" onclick={startTour}>{tr('replayTour')} ↗</button>
         {#each ['Flow', 'Files', 'Picker', 'Session', 'Convert', 'Privacy', 'Trouble'] as topic}<details><summary>{tr(`help${topic}Q`)}</summary><p>{tr(`help${topic}A`)}</p></details>{/each}
         <div class="support-actions"><button class="text-button" onclick={() => window.nib.openReleases()}>{tr('versions')}</button><button class="text-button" onclick={exportDiagnostics}>{tr('diagnostics')}</button></div><p>{tr('diagnosticsNote')}</p><p>{tr('version', { version: data?.appVersion || '0.2.1' })}</p>

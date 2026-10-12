@@ -38,7 +38,7 @@ export type SessionService = 'instagram' | 'youtube' | 'twitter'
 export type ConversionFormat = 'mp4' | 'mkv' | 'mp3' | 'wav'
 export interface HistoryPage { items: Task[]; nextOffset: number | null }
 export interface HistoryQuery { search?: string; mediaType?: MediaType | 'all'; offset?: number; limit?: number }
-export interface AppSnapshot { tasks: Task[]; history: Task[]; preferences: Preferences; sessions: Record<SessionService, boolean>; engine: 'starting' | 'ready' | 'error'; engineError?: string; appVersion: string }
+export interface AppSnapshot { tasks: Task[]; history: Task[]; preferences: Preferences; sessions: Record<SessionService, boolean>; engine: 'starting' | 'ready' | 'error'; engineError?: string; appVersion: string; extractorVersion?: string }
 
 export interface NibApi {
   snapshot(): Promise<AppSnapshot>
@@ -56,6 +56,7 @@ export interface NibApi {
   exportDiagnostics(): Promise<string | null>
   openReleases(): Promise<void>
   restartEngine(): Promise<void>
+  updateEngine(): Promise<string>
   onSnapshot(callback: (snapshot: AppSnapshot) => void): () => void
   onTask(callback: (task: Task) => void): () => void
 }

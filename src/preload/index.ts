@@ -17,6 +17,7 @@ const api: NibApi = {
   exportDiagnostics: () => ipcRenderer.invoke('nib:export-diagnostics'),
   openReleases: () => ipcRenderer.invoke('nib:open-releases'),
   restartEngine: () => ipcRenderer.invoke('nib:restart-engine'),
+  updateEngine: () => ipcRenderer.invoke('nib:update-engine'),
   onSnapshot: (callback: (snapshot: AppSnapshot) => void) => {
     const listener = (_event: Electron.IpcRendererEvent, data: AppSnapshot) => callback(data)
     ipcRenderer.on('nib:snapshot', listener)
