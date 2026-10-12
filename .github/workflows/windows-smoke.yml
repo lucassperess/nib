@@ -16,7 +16,7 @@ jobs:
           version: 11.25.0
       - uses: actions/setup-node@v4
         with:
-          node-version: 24
+          node-version: 24.14.0
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm typecheck
@@ -40,6 +40,9 @@ jobs:
           $report = Get-Content $reportPath -Raw | ConvertFrom-Json
           $report | ConvertTo-Json -Depth 4
           if ($appProcess.ExitCode -ne 0 -or -not $report.ok) { throw 'Installed app smoke test failed' }
+          foreach ($notice in @('Nib-LICENSE.txt', 'ASSET_LICENSE.md', 'THIRD_PARTY_NOTICES.md', 'yt-dlp-LICENSE.txt', 'yt-dlp-THIRD_PARTY_LICENSES.txt', 'ffmpeg-GPL-3.0.txt', 'node-LICENSE.txt')) {
+            if (-not (Test-Path (Join-Path $install "resources/legal/$notice"))) { throw "Missing license notice: $notice" }
+          }
       - uses: actions/upload-artifact@v4
         if: always()
         with:

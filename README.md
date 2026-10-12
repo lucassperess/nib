@@ -1,12 +1,21 @@
 # Nib
 
-Nib is a Windows x64 desktop companion for saving media from links. Its interface, queue, file handling, history, and animated character are original to Nib. Media extraction runs locally through a pinned [yt-dlp](https://github.com/yt-dlp/yt-dlp) executable, with bundled Node.js for site scripts and [FFmpeg](https://ffmpeg.org/) for media processing. There is no local API server, VPS, or separate runtime installation for users.
+Nib is a Windows x64 desktop companion for saving media from links. Its interface, queue, file handling, history, and animated character are original to Nib. Media extraction runs locally through a pinned [yt-dlp](https://github.com/yt-dlp/yt-dlp) executable, with bundled Node.js for site scripts and [FFmpeg](https://ffmpeg.org/) for media processing. There is no VPS or separate runtime installation for users.
 
-The repository is private for now but documented for eventual publication. A license for Nib's original code and artwork has not been chosen; review asset rights and third-party licenses before redistribution.
+![Nib Home, with the link field, Video and Audio choices, and the mascot](docs/screenshots/home.png)
+
+## Baixar e instalar — sem terminal
+
+1. Abra a página de [Releases do Nib](https://github.com/lucassperess/nib/releases/latest).
+2. Na seção **Assets**, clique em **Nib Setup 0.4.0.exe** para baixar o instalador. Não escolha **Source code** se você só quer usar o aplicativo.
+3. Abra o arquivo baixado, siga o instalador e inicie **Nib** pelo menu Iniciar.
+4. Siga o tutorial dentro do app. Na Home, cole um link, escolha **Vídeo** ou **Áudio** e clique em **Baixar**. Acompanhe em **Downloads** e abra o arquivo em **Histórico**.
+
+Guia ilustrado por etapas, problemas comuns e instruções em inglês: [Como baixar e usar o Nib](docs/INSTALL.md). O Nib funciona localmente; você não precisa instalar Node.js, pnpm ou FFmpeg.
 
 ## First use
 
-1. Install a validated build from the private [Releases](https://github.com/lucassperess/nib/releases) page on Windows x64.
+1. Install a validated build from [Releases](https://github.com/lucassperess/nib/releases) on Windows x64.
 2. Follow or skip Nib's five-step tour, including local file conversion and private sessions. **Settings → Help → Replay the tour** is always available.
 3. Paste or drop a media link on Home and choose Video or Audio. **Convert a file** on Home opens a separate local workflow.
 4. Follow the task in Downloads. Select items if a link resolves to multiple media items.
@@ -33,11 +42,11 @@ At most two tasks run concurrently. Each task uses a temporary directory, then a
 
 ## Development and build
 
-Install Node.js 24, pnpm 11, and Git on Windows x64:
+Install Node.js 24.14.0, pnpm 11, and Git on Windows x64:
 
 ```powershell
-git clone <private-repository-url>
-cd Nib
+git clone https://github.com/lucassperess/nib.git
+cd nib
 pnpm install
 pnpm prepare:tools
 pnpm dev
@@ -45,7 +54,7 @@ pnpm dev
 
 Run `pnpm typecheck`, `pnpm test`, and `pnpm build` before packaging. `pnpm dist:win` prepares the pinned tools and creates an installer in `release/`. The tool preparation script verifies the SHA-256 of the pinned official yt-dlp binary. A packaged smoke mode checks the sandboxed UI bridge and real video/audio downloads. The manual GitHub Actions workflow also installs the package with no external Node or pnpm on `PATH`.
 
-Do not commit `.runtime/`, `.bundle/`, `release/`, local databases, or session files. The `docs/cobalt-*` documents are historical research from the first implementation; Cobalt is no longer a runtime dependency of Nib.
+Do not commit `.runtime/`, `.bundle/`, `release/`, local databases, session files, or downloaded media. See the [development guide](docs/DEVELOPMENT.md), [design guide](docs/DESIGN.md), and [historical notes](docs/archive/README.md).
 
 ## Privacy and security
 
@@ -65,8 +74,8 @@ Do not commit `.runtime/`, `.bundle/`, `release/`, local databases, or session f
 | File cannot be saved | Choose a writable folder in Settings and check free disk space. |
 | Conversion fails | Try another format. The original file remains untouched. |
 
-The installed extractor is not automatically updated. Some services change often, so a pinned version can stop working until the user requests an update. A task paused during the current session can resume; after app restart, interrupted tasks restart from the beginning. The first sprite atlas should be reviewed before public distribution.
+The installed extractor is not automatically updated. Some services change often, so a pinned version can stop working until the user requests an update. A task paused during the current session can resume; after app restart, interrupted tasks restart from the beginning.
 
 ## Credits
 
-Nib bundles the official [yt-dlp](https://github.com/yt-dlp/yt-dlp) Windows binary and uses [ffmpeg-static](https://github.com/eugeneware/ffmpeg-static) to bundle FFmpeg. Review the licenses of these components and their binaries before distributing Nib. The backgrounds and wordmark were supplied for this project. The first sprite atlas was generated from the supplied character reference.
+Nib's original code is [MIT licensed](LICENSE). The Nib backgrounds, wordmark, icon, mascot, and sprites are [rights reserved](ASSET_LICENSE.md). Bundled tools have their own terms and source links in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md). Earlier design research remains in `docs/archive/`; third-party reference screenshots are not part of the current source tree.

@@ -2,7 +2,7 @@
 
 Pesquisa de referência em 5 de outubro de 2026. Fontes primárias: [API do cobalt](https://github.com/imputnet/cobalt/blob/main/docs/api.md), [configurações do cobalt](https://cobalt.tools/settings/video), [processamento local](https://cobalt.tools/settings/local), [remux](https://cobalt.tools/remux), [instâncias](https://cobalt.tools/settings/instances).
 
-Este documento registra a pesquisa e as decisões de UX anteriores à implementação. Para o estado atual do aplicativo, veja o [README](../README.md) e a [matriz de validação](test-matrix.md).
+Este documento registra a pesquisa e as decisões de UX anteriores à implementação. Para o estado atual do aplicativo, veja o [README](../../README.md) e a [matriz histórica de validação](test-matrix-0.1.md).
 
 Investigação posterior do repositório oficial: [cobalt-github-investigation.md](cobalt-github-investigation.md). O parâmetro `localProcessing` da API determina se o **cliente** faz merge/conversão; ele não significa que a instância da API roda na máquina do usuário. A escolha de hospedar a API localmente ou numa VPS é independente desse parâmetro.
 

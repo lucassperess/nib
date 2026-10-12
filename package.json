@@ -4,6 +4,8 @@
   "private": true,
   "packageManager": "pnpm@11.25.0",
   "description": "Nib — a little desktop companion for saving media",
+  "author": "Lucas Peres",
+  "license": "MIT",
   "main": "./out/main/index.js",
   "type": "module",
   "scripts": {
@@ -50,7 +52,15 @@
       {
         "from": ".runtime/node.exe",
         "to": "node.exe"
-      }
+      },
+      { "from": "LICENSE", "to": "legal/Nib-LICENSE.txt" },
+      { "from": "ASSET_LICENSE.md", "to": "legal/ASSET_LICENSE.md" },
+      { "from": "THIRD_PARTY_NOTICES.md", "to": "legal/THIRD_PARTY_NOTICES.md" },
+      { "from": "legal/yt-dlp-LICENSE.txt", "to": "legal/yt-dlp-LICENSE.txt" },
+      { "from": "legal/yt-dlp-THIRD_PARTY_LICENSES.txt", "to": "legal/yt-dlp-THIRD_PARTY_LICENSES.txt" },
+      { "from": "legal/ffmpeg-GPL-3.0.txt", "to": "legal/ffmpeg-GPL-3.0.txt" },
+      { "from": "legal/ffmpeg-build-README.txt", "to": "legal/ffmpeg-build-README.txt" },
+      { "from": "legal/node-LICENSE.txt", "to": "legal/node-LICENSE.txt" }
     ],
     "win": {
       "icon": "assets/branding/nib.ico",
