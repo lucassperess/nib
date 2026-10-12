@@ -177,20 +177,31 @@ app.whenReady().then(async () => {
       const bridge = await window!.webContents.executeJavaScript('window.nib.snapshot().then(s => ({ version: s.appVersion, engine: s.engine }))')
       if (bridge.version !== app.getVersion() || bridge.engine !== 'ready') throw new Error('Sandboxed preload bridge failed')
       report.bridge = bridge
+      const sources = [
+        { name: 'streamable', url: 'https://streamable.com/p9cln4' },
+        { name: 'youtube', url: 'https://www.youtube.com/watch?v=jNQXAC9IVRw' }
+      ]
+      const attempts: Array<{ mode: MediaMode; source: string; code: string }> = []
+      report.attempts = attempts
       for (const mode of ['video', 'audio'] as const) {
-        const id = downloads.submit('https://www.youtube.com/watch?v=jNQXAC9IVRw', mode)
-        const deadline = Date.now() + 120_000
-        let task: Task | undefined
-        do {
-          task = store.getTask(id)
-          if (task?.state === 'completed' || task?.state === 'failed') break
-          await new Promise(resolve => setTimeout(resolve, 250))
-        } while (Date.now() < deadline)
-        if (task?.state !== 'completed' || !task.outputPath || !existsSync(task.outputPath)) {
-          const detail = (task?.error || '').replace(/https?:\/\/\S+/g, '[url]').replace(/[A-Z]:\\[^\s]+/gi, '[path]').slice(0, 400)
-          throw new Error(`${mode} failed: ${task?.errorCode || task?.state || 'timeout'}${detail ? ` (${detail})` : ''}`)
+        for (const source of sources) {
+          const id = downloads.submit(source.url, mode)
+          const deadline = Date.now() + 120_000
+          let task: Task | undefined
+          do {
+            task = store.getTask(id)
+            if (task?.state === 'completed' || task?.state === 'failed') break
+            await new Promise(resolve => setTimeout(resolve, 250))
+          } while (Date.now() < deadline)
+          if (task?.state === 'completed' && task.outputPath && existsSync(task.outputPath)) {
+            report[mode] = { source: source.name, bytes: task.bytesReceived, mediaType: task.mediaType }
+            break
+          }
+          const code = task?.errorCode || task?.state || 'timeout'
+          attempts.push({ mode, source: source.name, code })
+          if (task && task.state !== 'failed') downloads.action(id, 'cancel')
         }
-        report[mode] = { bytes: task.bytesReceived, mediaType: task.mediaType }
+        if (!report[mode]) throw new Error(`${mode} failed: ${attempts.filter(attempt => attempt.mode === mode).map(attempt => `${attempt.source}:${attempt.code}`).join(', ')}`)
       }
       report.ok = true
     } catch (error) { report.ok = false; report.failure = String(error) }
