@@ -4,6 +4,7 @@ dist/
 release/
 .bundle/
 .runtime/
+vendor/cobalt/
 *.log
 .env
 .env.*
@@ -18,3 +19,4 @@ p2-nib
 p3
 p3-nib
 nib-logo-font
+references/

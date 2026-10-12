@@ -1,8 +1,11 @@
 {
   "name": "nib-desktop",
-  "version": "0.1.0",
+  "version": "0.4.0",
   "private": true,
+  "packageManager": "pnpm@11.25.0",
   "description": "Nib — a little desktop companion for saving media",
+  "author": "Lucas Peres",
+  "license": "MIT",
   "main": "./out/main/index.js",
   "type": "module",
   "scripts": {
@@ -11,11 +14,12 @@
     "build": "electron-vite build",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "prepare:cobalt": "node scripts/prepare-cobalt.mjs",
-    "dist:win": "pnpm build && pnpm prepare:cobalt && electron-builder --win nsis"
+    "prepare:tools": "node scripts/prepare-tools.mjs",
+    "dist:win": "pnpm build && pnpm prepare:tools && electron-builder --win nsis --publish never"
   },
   "dependencies": {
-    "better-sqlite3": "^12.2.0"
+    "better-sqlite3": "^12.2.0",
+    "ffmpeg-static": "5.3.0"
   },
   "devDependencies": {
     "@sveltejs/vite-plugin-svelte": "^6.2.1",
@@ -32,15 +36,48 @@
   "build": {
     "appId": "dev.nib.desktop",
     "productName": "Nib",
-    "directories": { "output": "release" },
-    "files": ["out/**/*", "package.json"],
-    "asarUnpack": ["node_modules/better-sqlite3/**"],
-    "extraResources": [
-      { "from": ".bundle/cobalt-api", "to": "cobalt", "filter": ["**/*"] },
-      { "from": ".bundle/cobalt-api/node_modules", "to": "cobalt/node_modules", "filter": ["**/*"] },
-      { "from": ".runtime/node.exe", "to": "node.exe" }
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "out/**/*",
+      "package.json"
     ],
-    "win": { "icon": "assets/branding/nib.ico", "target": [{ "target": "nsis", "arch": ["x64"] }] },
-    "nsis": { "oneClick": false, "allowToChangeInstallationDirectory": true }
+    "asarUnpack": [
+      "node_modules/better-sqlite3/**"
+    ],
+    "extraResources": [
+      { "from": ".runtime/yt-dlp.exe", "to": "yt-dlp.exe" },
+      { "from": ".runtime/ffmpeg.exe", "to": "ffmpeg.exe" },
+      {
+        "from": ".runtime/node.exe",
+        "to": "node.exe"
+      },
+      { "from": "LICENSE", "to": "legal/Nib-LICENSE.txt" },
+      { "from": "ASSET_LICENSE.md", "to": "legal/ASSET_LICENSE.md" },
+      { "from": "THIRD_PARTY_NOTICES.md", "to": "legal/THIRD_PARTY_NOTICES.md" },
+      { "from": "legal/yt-dlp-LICENSE.txt", "to": "legal/yt-dlp-LICENSE.txt" },
+      { "from": "legal/yt-dlp-THIRD_PARTY_LICENSES.txt", "to": "legal/yt-dlp-THIRD_PARTY_LICENSES.txt" },
+      { "from": "legal/ffmpeg-GPL-3.0.txt", "to": "legal/ffmpeg-GPL-3.0.txt" },
+      { "from": "legal/ffmpeg-build-README.txt", "to": "legal/ffmpeg-build-README.txt" },
+      { "from": "legal/node-LICENSE.txt", "to": "legal/node-LICENSE.txt" },
+      { "from": "legal/svelte-LICENSE.md", "to": "legal/svelte-LICENSE.md" },
+      { "from": "legal/better-sqlite3-LICENSE.txt", "to": "legal/better-sqlite3-LICENSE.txt" }
+    ],
+    "win": {
+      "icon": "assets/branding/nib.ico",
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
+    }
   }
 }

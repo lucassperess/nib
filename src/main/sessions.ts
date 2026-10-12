@@ -45,5 +45,27 @@ export class Sessions {
     }
     writeFileSync(this.cookiePath, JSON.stringify(cookies), { mode: 0o600 })
   }
+  materializeFor(url: string, file: string): string | null {
+    const host = new URL(url).hostname.toLowerCase()
+    const service: SessionService | null = /(^|\.)youtube\.com$|(^|\.)youtu\.be$/.test(host) ? 'youtube'
+      : /(^|\.)instagram\.com$/.test(host) ? 'instagram'
+      : /(^|\.)x\.com$|(^|\.)twitter\.com$/.test(host) ? 'twitter' : null
+    rmSync(file, { force: true })
+    if (!service) return null
+    const encrypted = this.readVault()[service]
+    if (!encrypted) return null
+    const domain = service === 'youtube' ? '.youtube.com' : service === 'instagram' ? '.instagram.com' : '.x.com'
+    const raw = safeStorage.decryptString(Buffer.from(encrypted, 'base64'))
+    const lines = raw.split(';').map(part => part.trim()).filter(Boolean).flatMap(part => {
+      const index = part.indexOf('=')
+      if (index <= 0) return []
+      const name = part.slice(0, index).trim(), value = part.slice(index + 1).trim()
+      if (/^(path|domain|expires|max-age|samesite|secure|httponly)$/i.test(name) || /[\r\n\t]/.test(part)) return []
+      return [`${domain}\tTRUE\t/\tTRUE\t0\t${name}\t${value}`]
+    })
+    if (!lines.length) return null
+    writeFileSync(file, `# Netscape HTTP Cookie File\n${lines.join('\n')}\n`, { mode: 0o600 })
+    return file
+  }
   clearRuntimeFile(): void { rmSync(this.cookiePath, { force: true }) }
 }

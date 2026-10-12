@@ -43,7 +43,7 @@ Logo: `assets/branding/nib-wordmark.png` (1983 × 793, com transparência). As i
 - Posição, tamanho e falas do Nib em cada página e em janelas menores.
 - Peso das imagens e animações para manter o aplicativo responsivo.
 
-Fonte de produto e mascote: [página Nib no Notion](https://app.notion.com/p/3f0b3b88070380368d23c7f91f453221). As notas abaixo registram a direção anterior, de 5 de outubro de 2026, e servem como histórico de decisões; os designs do Figma acima são a referência visual atual.
+Fonte de produto e mascote: briefing privado de design do Nib. As notas abaixo registram a direção anterior, de 5 de outubro de 2026, e servem como histórico de decisões; os designs do Figma acima são a referência visual atual.
 
 ## Produto
 
@@ -80,7 +80,7 @@ Telas e fluxos prioritários do documento: Home vazia; link recebido e Analyze; 
 
 ## Referências visuais fornecidas
 
-Arquivos em `references/`:
+Referências usadas na exploração privada de design (não distribuídas no repositório público):
 
 1. `codex-mini.png` — posição e presença discreta do companion no canto inferior direito.
 2. `opencode.png` — foco, espaço negativo e hierarquia de devtool.

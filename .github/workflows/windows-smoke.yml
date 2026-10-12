@@ -1,0 +1,52 @@
+name: Windows installer smoke test
+
+on:
+  workflow_dispatch:
+
+jobs:
+  installer:
+    runs-on: windows-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: false
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.25.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24.14.0
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm typecheck
+      - run: pnpm test
+      - run: pnpm dist:win
+      - name: Install and test without external Node or pnpm
+        shell: pwsh
+        run: |
+          $setup = Get-ChildItem release -Filter 'Nib Setup 0.4.0.exe' | Select-Object -First 1
+          if (-not $setup) { throw 'Installer not found' }
+          $install = Join-Path $env:RUNNER_TEMP 'nib-smoke-install'
+          $installed = Join-Path $install 'Nib.exe'
+          $smoke = Join-Path $env:RUNNER_TEMP 'nib-smoke-data'
+          $setupProcess = Start-Process -FilePath $setup.FullName -ArgumentList @('/S', "/D=$install") -Wait -PassThru -WindowStyle Hidden
+          if ($setupProcess.ExitCode -ne 0 -or -not (Test-Path $installed)) { throw "Installer failed: $($setupProcess.ExitCode)" }
+          $env:NIB_SMOKE_DIR = $smoke
+          $env:PATH = "$env:WINDIR\System32;$env:WINDIR"
+          $appProcess = Start-Process -FilePath $installed -ArgumentList '--nib-smoke' -Wait -PassThru -WindowStyle Hidden
+          $reportPath = Join-Path $smoke 'smoke-report.json'
+          if (-not (Test-Path $reportPath)) { throw "No smoke report; app exit $($appProcess.ExitCode)" }
+          $report = Get-Content $reportPath -Raw | ConvertFrom-Json
+          $report | ConvertTo-Json -Depth 4
+          if ($appProcess.ExitCode -ne 0 -or -not $report.ok) { throw 'Installed app smoke test failed' }
+          foreach ($notice in @('Nib-LICENSE.txt', 'ASSET_LICENSE.md', 'THIRD_PARTY_NOTICES.md', 'yt-dlp-LICENSE.txt', 'yt-dlp-THIRD_PARTY_LICENSES.txt', 'ffmpeg-GPL-3.0.txt', 'node-LICENSE.txt', 'svelte-LICENSE.md', 'better-sqlite3-LICENSE.txt')) {
+            if (-not (Test-Path (Join-Path $install "resources/legal/$notice"))) { throw "Missing license notice: $notice" }
+          }
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: nib-windows-smoke
+          path: |
+            ${{ runner.temp }}/nib-smoke-data/smoke-report.json
+            release/Nib Setup 0.4.0.exe

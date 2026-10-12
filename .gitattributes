@@ -1,0 +1,2 @@
+# Keep official third-party license texts byte-for-byte.
+legal/** -text -whitespace
