@@ -29,6 +29,7 @@
 .tour-card.step-five{right:6%;top:20%}
 .session-settings.tour-highlight{position:relative;z-index:5}
 .browser-session{margin-top:18px;padding-top:13px;border-top:1px solid #b69ad057}.browser-session h3{font-size:12px;margin:0 0 7px}.browser-session>div{display:flex;gap:8px;flex-wrap:wrap}.browser-session .pairing-code{margin-top:12px;font-size:12px;color:#f7eaff;user-select:text}
+.session-settings .session-confirmation{margin-top:9px;font-size:12px;color:#f7eaff}
 @media(max-width:1100px){
   .hero-logo-frame{width:clamp(295px,33vw,370px)}
   .tour-card.step-three{left:6%;top:61%;right:auto;bottom:auto}
