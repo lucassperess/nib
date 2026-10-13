@@ -37,10 +37,11 @@ Site availability, available qualities, and formats depend on the source. Cookie
 When a service requires access to your account, Nib can receive a session from its Chrome or Brave extension. The extension is in the project's `extension/` directory and is bundled with the installer; **it is not yet published in extension stores**.
 
 1. In Nib, open **Settings → Private sessions → Open extension folder**.
-2. In **Brave**, open `brave://extensions`; in **Chrome**, open `chrome://extensions`. Enable **Developer mode**, click **Load unpacked**, and select the folder opened by Nib. The purple Nib mascot icon will appear in the extensions list; you can pin it to the toolbar.
-3. In Nib, choose YouTube, Instagram, or X, then click **Generate connection code**.
-4. Open your account site in a tab and click Nib's extension icon. It selects the active tab's site automatically; on another page, choose a site manually. Enter the code and click **Send session to Nib**. The browser will ask for access to the selected site's cookies.
-5. Check for **“[site] session connected on this computer”** in Nib. If it does not appear, generate a fresh code and retry.
+2. In **Brave**, open `brave://extensions`; in **Chrome**, open `chrome://extensions`. Enable **Developer mode**, click **Load unpacked**, and select the folder opened by Nib. Confirm that **Nib — private sessions** appears in the list.
+3. To show the mascot in the toolbar, click the browser's **puzzle piece**, find **Nib — private sessions**, and click its **pin**. The puzzle piece is the browser's extensions menu, not Nib's icon. If the extension was already installed before updating Nib, click **Reload** on its card in `brave://extensions` or `chrome://extensions`.
+4. In Nib, choose YouTube, Instagram, or X, then click **Generate connection code**.
+5. Open your account site in a tab and click Nib's extension icon. It selects the active tab's site automatically; on another page, choose a site manually. Enter the code and click **Send session to Nib**. The browser will ask for access to the selected site's cookies.
+6. Check for **“[site] session connected on this computer”** in Nib. If it does not appear, generate a fresh code and retry.
 
 The code lasts five minutes. The popup starts in Brazilian Portuguese; click **EN** for English and **PT** to switch back. The extension sends cookies only after you click, over the local `127.0.0.1` connection, and does not store them. It saves only your language choice. Nib protects the session in your Windows profile. Use only accounts you control. The [extension privacy policy](extension/PRIVACY.md) explains the data and limits. Manual import remains available.
 

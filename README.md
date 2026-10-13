@@ -37,10 +37,11 @@ A disponibilidade de sites, qualidades e formatos depende da fonte. Sessões de 
 Quando um serviço exigir acesso à sua conta, o Nib pode receber a sessão de uma extensão para Chrome ou Brave. A extensão está na pasta `extension/` do projeto e também é incluída no instalador; **ela ainda não está publicada em lojas de extensões**.
 
 1. No Nib, abra **Configurações → Sessões privadas → Abrir pasta da extensão**.
-2. No **Brave**, abra `brave://extensions`; no **Chrome**, abra `chrome://extensions`. Ative **Modo do desenvolvedor**, clique em **Carregar sem compactação** e selecione a pasta aberta pelo Nib. O ícone roxo do mascote aparecerá na lista de extensões; você pode fixá-lo na barra do navegador.
-3. No Nib, escolha YouTube, Instagram ou X e clique em **Gerar código de conexão**.
-4. Abra o site da sua conta em uma aba e clique no ícone da extensão. Ela seleciona automaticamente o site dessa aba; se estiver em outra página, escolha o site manualmente. Digite o código mostrado no Nib e clique em **Enviar sessão ao Nib**. O navegador pedirá acesso aos cookies apenas do serviço selecionado.
-5. Confirme a mensagem **“Sessão do X/Instagram/YouTube conectada neste computador”** no Nib. Se não aparecer, gere outro código e tente novamente.
+2. No **Brave**, abra `brave://extensions`; no **Chrome**, abra `chrome://extensions`. Ative **Modo do desenvolvedor**, clique em **Carregar sem compactação** e selecione a pasta aberta pelo Nib. Confirme que **Nib — sessões privadas** aparece na lista.
+3. Para deixar o mascote visível na barra, clique no ícone de **quebra-cabeça** do navegador, encontre **Nib — sessões privadas** e clique no **alfinete** ao lado. O quebra-cabeça é o menu de extensões do navegador, não o ícone do Nib. Se a extensão já estava instalada antes de atualizar o Nib, clique em **Recarregar** no cartão dela em `brave://extensions` ou `chrome://extensions`.
+4. No Nib, escolha YouTube, Instagram ou X e clique em **Gerar código de conexão**.
+5. Abra o site da sua conta em uma aba e clique no ícone da extensão. Ela seleciona automaticamente o site dessa aba; se estiver em outra página, escolha o site manualmente. Digite o código mostrado no Nib e clique em **Enviar sessão ao Nib**. O navegador pedirá acesso aos cookies apenas do serviço selecionado.
+6. Confirme a mensagem **“Sessão do X/Instagram/YouTube conectada neste computador”** no Nib. Se não aparecer, gere outro código e tente novamente.
 
 O código vale por cinco minutos. A extensão começa em português brasileiro; use **EN** no popup para trocar para inglês e **PT** para voltar. Ela envia os cookies somente quando você clica, pela conexão local `127.0.0.1`, e não os armazena. A extensão guarda apenas a preferência de idioma. O Nib protege a sessão no perfil do Windows. Use apenas contas que você controla. A [política de privacidade da extensão](extension/PRIVACY.md) explica os dados e seus limites. A importação manual continua disponível.
 
