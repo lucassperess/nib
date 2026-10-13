@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Nib</title>
+  <link rel="stylesheet" href="popup.css" />
+  <script defer src="popup.js"></script>
+</head>
+<body>
+  <main>
+    <header>
+      <img src="icons/nib.ico" alt="" width="32" height="32" />
+      <h1>Nib <span id="subtitle"></span></h1>
+      <button id="language" type="button"></button>
+    </header>
+    <p id="intro"></p>
+    <label for="service" id="service-label"></label>
+    <select id="service"><option value=""></option><option value="youtube">YouTube</option><option value="instagram">Instagram</option><option value="twitter">X</option></select>
+    <p id="detected" aria-live="polite"></p>
+    <label for="code" id="code-label"></label>
+    <input id="code" inputmode="text" autocomplete="off" maxlength="12" spellcheck="false" />
+    <button id="send" type="button"></button>
+    <p id="status" role="status" aria-live="polite"></p>
+    <small id="privacy"></small>
+  </main>
+</body>
+</html>

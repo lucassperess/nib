@@ -18,7 +18,7 @@ O Nib guarda suas preferências e o Histórico no seu perfil do Windows. Instala
 
 ## 3. Faça o primeiro download
 
-1. Acompanhe o tutorial curto do Nib. Você pode pulá-lo e repeti-lo em **Configurações → Ajuda → Repetir tutorial**.
+1. Acompanhe o tutorial de seis passos do Nib. Ele mostra também como instalar a extensão para sessões privadas; essa parte é opcional. Você pode pulá-lo e repeti-lo em **Configurações → Ajuda → Repetir tutorial**.
 2. Na **Home**, cole um link de mídia. Escolha **Vídeo** ou **Áudio** e clique em **Baixar com Nib**.
 3. Em **Downloads**, veja o andamento em bytes, pause ou cancele se precisar. Quando o site fornecer o tamanho total, o Nib mostrará também o total e a porcentagem.
 4. Abra **Histórico** para encontrar o arquivo concluído e abrir o arquivo ou sua pasta.
@@ -30,6 +30,18 @@ O Nib guarda suas preferências e o Histórico no seu perfil do Windows. Instala
 ![Histórico do Nib: somente arquivos concluídos aparecem aqui](screenshots/history.png)
 
 Para converter um arquivo que já está no computador, use **Converter arquivo** na Home, escolha o formato e acompanhe a tarefa em Downloads. O original é preservado. O tutorial também mostra onde importar uma sessão privada quando um site exigir acesso à sua conta; isso é opcional para links públicos.
+
+### Se o site pedir uma sessão da sua conta
+
+1. Em **Configurações → Sessões privadas**, clique em **Abrir pasta da extensão**.
+2. No Brave, abra `brave://extensions`; no Chrome, abra `chrome://extensions`. Ative **Modo do desenvolvedor**, escolha **Carregar sem compactação** e selecione a pasta que o Nib abriu. O ícone roxo do mascote identifica a extensão.
+3. No Nib, escolha o site e clique em **Gerar código de conexão**.
+4. Abra esse site no navegador e clique no ícone do Nib. A extensão seleciona automaticamente X, Instagram ou YouTube conforme a aba aberta. Em outra página, selecione o site manualmente. Digite o código e clique em **Enviar sessão ao Nib**. Permita o acesso aos cookies do site selecionado quando o navegador solicitar.
+5. Confira a confirmação **“Sessão do [site] conectada neste computador”** no Nib. Se necessário, gere um código novo: ele expira em cinco minutos.
+
+A extensão começa em português; use **EN** para inglês e **PT** para voltar. Ela é opcional, não está publicada em loja e não guarda cópias dos cookies. A importação manual continua disponível.
+
+Ao atualizar o Nib, use **Recarregar** na página de extensões do navegador para aplicar a nova versão da extensão. Não é preciso instalá-la novamente.
 
 ## Se algo não funcionar
 
@@ -51,8 +63,12 @@ Nib runs on **Windows x64**. No terminal, Node.js, or VPS is needed.
 
 1. Open the [latest GitHub release](https://github.com/lucassperess/nib/releases/latest). Under **Assets**, download the Nib **.exe** installer, not the Source code archive.
 2. Run the installer and open **Nib** from the Start menu. If Windows shows a security warning, verify the file name and release source before proceeding.
-3. Follow or skip the five-step tour. You can replay it under **Settings → Help → Replay the tour**.
+3. Follow or skip the six-step tour, which includes optional extension installation. You can replay it under **Settings → Help → Replay the tour**.
 4. On Home, paste a media link, choose **Video** or **Audio**, and click **Download with Nib**. Follow the task in Downloads and open completed files from History.
 5. **Convert a file** on Home works with a local file and preserves the original. Private sessions are optional and only needed when a site requires access to your account.
+
+For a private session, open **Settings → Private sessions → Open extension folder**. Open `chrome://extensions` in Chrome or `brave://extensions` in Brave, enable **Developer mode**, and **Load unpacked** with that folder. Choose a service in Nib and generate a connection code. Open the service's site in a browser tab, click the purple Nib icon, and check that the correct service was selected automatically. Enter the code and send the session. Confirm **“[site] session connected on this computer”** in Nib. The code expires after five minutes. The popup starts in Portuguese; **EN** switches to English and **PT** switches back. The extension is optional and is not yet published in a store.
+
+After updating Nib, use **Reload** on the browser's extensions page to apply extension changes. You do not need to install it again.
 
 For errors, read the message in Downloads and use **Retry**. Updating Nib preserves its local preferences and History. The [README](../README.md) includes troubleshooting and development details.

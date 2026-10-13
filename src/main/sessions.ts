@@ -2,6 +2,7 @@ import { safeStorage } from 'electron'
 import { existsSync, readFileSync, writeFileSync, mkdirSync, rmSync } from 'node:fs'
 import { join } from 'node:path'
 import type { SessionService } from '../shared/types'
+import { serializeBrowserCookies } from './browser-cookies'
 
 type Vault = Partial<Record<SessionService, string>>
 const SERVICES: SessionService[] = ['instagram', 'youtube', 'twitter']
@@ -32,6 +33,14 @@ export class Sessions {
     vault[service] = safeStorage.encryptString(trimmed).toString('base64')
     writeFileSync(this.vaultPath, JSON.stringify(vault), { mode: 0o600 })
   }
+  importBrowser(service: SessionService, cookies: unknown): void {
+    if (!SERVICES.includes(service)) throw new Error('Unknown service')
+    if (!safeStorage.isEncryptionAvailable()) throw new Error('Windows credential protection is unavailable')
+    const serialized = serializeBrowserCookies(service, cookies)
+    const vault = this.readVault()
+    vault[service] = safeStorage.encryptString(serialized).toString('base64')
+    writeFileSync(this.vaultPath, JSON.stringify(vault), { mode: 0o600 })
+  }
   clear(service: SessionService): void {
     const vault = this.readVault()
     delete vault[service]
@@ -56,6 +65,10 @@ export class Sessions {
     if (!encrypted) return null
     const domain = service === 'youtube' ? '.youtube.com' : service === 'instagram' ? '.instagram.com' : '.x.com'
     const raw = safeStorage.decryptString(Buffer.from(encrypted, 'base64'))
+    if (raw.startsWith('# Netscape HTTP Cookie File\n')) {
+      writeFileSync(file, raw, { mode: 0o600 })
+      return file
+    }
     const lines = raw.split(';').map(part => part.trim()).filter(Boolean).flatMap(part => {
       const index = part.indexOf('=')
       if (index <= 0) return []

@@ -25,13 +25,15 @@ jobs:
       - name: Install and test without external Node or pnpm
         shell: pwsh
         run: |
-          $setup = Get-ChildItem release -Filter 'Nib Setup 0.4.0.exe' | Select-Object -First 1
+          $version = (Get-Content package.json -Raw | ConvertFrom-Json).version
+          $setup = Get-ChildItem release -Filter "Nib Setup $version.exe" | Select-Object -First 1
           if (-not $setup) { throw 'Installer not found' }
           $install = Join-Path $env:RUNNER_TEMP 'nib-smoke-install'
           $installed = Join-Path $install 'Nib.exe'
           $smoke = Join-Path $env:RUNNER_TEMP 'nib-smoke-data'
           $setupProcess = Start-Process -FilePath $setup.FullName -ArgumentList @('/S', "/D=$install") -Wait -PassThru -WindowStyle Hidden
           if ($setupProcess.ExitCode -ne 0 -or -not (Test-Path $installed)) { throw "Installer failed: $($setupProcess.ExitCode)" }
+          if (-not (Test-Path (Join-Path $install 'resources/extension/manifest.json'))) { throw 'Browser extension missing from installer' }
           $env:NIB_SMOKE_DIR = $smoke
           $env:PATH = "$env:WINDIR\System32;$env:WINDIR"
           $appProcess = Start-Process -FilePath $installed -ArgumentList '--nib-smoke' -Wait -PassThru -WindowStyle Hidden
@@ -40,6 +42,7 @@ jobs:
           $report = Get-Content $reportPath -Raw | ConvertFrom-Json
           $report | ConvertTo-Json -Depth 4
           if ($appProcess.ExitCode -ne 0 -or -not $report.ok) { throw 'Installed app smoke test failed' }
+          if (-not $report.browserSession.imported -or -not $report.browserSession.cleared) { throw 'Browser session smoke test failed' }
           foreach ($notice in @('Nib-LICENSE.txt', 'ASSET_LICENSE.md', 'THIRD_PARTY_NOTICES.md', 'yt-dlp-LICENSE.txt', 'yt-dlp-THIRD_PARTY_LICENSES.txt', 'ffmpeg-GPL-3.0.txt', 'node-LICENSE.txt', 'svelte-LICENSE.md', 'better-sqlite3-LICENSE.txt')) {
             if (-not (Test-Path (Join-Path $install "resources/legal/$notice"))) { throw "Missing license notice: $notice" }
           }
@@ -49,4 +52,4 @@ jobs:
           name: nib-windows-smoke
           path: |
             ${{ runner.temp }}/nib-smoke-data/smoke-report.json
-            release/Nib Setup 0.4.0.exe
+            release/Nib Setup *.exe
