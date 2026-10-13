@@ -14,13 +14,14 @@ Nib is a Windows x64 desktop companion for saving media from links. Its interfac
 2. Under **Assets**, download the Nib installer ending in **.exe**. The **Source code** archives are for developers, not installation.
 3. Run the installer and launch **Nib** from the Start menu.
 4. Follow the in-app tour. On Home, paste a link, choose **Video** or **Audio**, and click **Download with Nib**. Track it in **Downloads** and open the finished file in **History**.
+5. If a site requires your account, the tour also explains how to [install Nib's Chrome or Brave extension](#optional-extension-for-private-sessions). Public links do not require this step.
 
 The [illustrated installation and first-use guide](docs/INSTALL.md) includes troubleshooting. Nib runs locally; you do not need to install Node.js, pnpm, or FFmpeg.
 
 ## First use
 
 1. Install a validated build from [Releases](https://github.com/lucassperess/nib/releases) on Windows x64.
-2. Follow or skip Nib's five-step tour, including local file conversion and private sessions. **Settings → Help → Replay the tour** is always available.
+2. Follow or skip Nib's six-step tour, including local file conversion, extension installation, and private sessions. **Settings → Help → Replay the tour** is always available.
 3. Paste or drop a media link on Home and choose Video or Audio. **Convert a file** on Home opens a separate local workflow.
 4. Follow the task in Downloads. Select items if a link resolves to multiple media items.
 5. Open finished files from History. Failed and canceled tasks stay in Downloads until removed; neither appears in History.
@@ -36,11 +37,14 @@ Site availability, available qualities, and formats depend on the source. Cookie
 When a service requires access to your account, Nib can receive a session from its Chrome or Brave extension. The extension is in the project's `extension/` directory and is bundled with the installer; **it is not yet published in extension stores**.
 
 1. In Nib, open **Settings → Private sessions → Open extension folder**.
-2. In your browser's extensions page, enable developer mode and choose **Load unpacked**. Select the folder opened by Nib.
+2. In **Brave**, open `brave://extensions`; in **Chrome**, open `chrome://extensions`. Enable **Developer mode**, click **Load unpacked**, and select the folder opened by Nib. The purple Nib mascot icon will appear in the extensions list; you can pin it to the toolbar.
 3. In Nib, choose YouTube, Instagram, or X, then click **Generate connection code**.
-4. Open the extension, select the same service, enter the code from Nib, and click **Send session to Nib**. The browser will request access to that service's cookies.
+4. Open your account site in a tab and click Nib's extension icon. It selects the active tab's site automatically; on another page, choose a site manually. Enter the code and click **Send session to Nib**. The browser will ask for access to the selected site's cookies.
+5. Check for **“[site] session connected on this computer”** in Nib. If it does not appear, generate a fresh code and retry.
 
-The code lasts five minutes. The extension sends cookies only after you click, over the local `127.0.0.1` connection, and does not store them. Nib protects them in your Windows profile. Use only accounts you control. The [extension privacy policy](extension/PRIVACY.md) explains the data and limits. Manual import remains available.
+The code lasts five minutes. The popup starts in Brazilian Portuguese; click **EN** for English and **PT** to switch back. The extension sends cookies only after you click, over the local `127.0.0.1` connection, and does not store them. It saves only your language choice. Nib protects the session in your Windows profile. Use only accounts you control. The [extension privacy policy](extension/PRIVACY.md) explains the data and limits. Manual import remains available.
+
+After installing a newer Nib version, click **Reload** for the extension on `brave://extensions` or `chrome://extensions` to use the updated popup. You do not need to add the extension again.
 
 ## Architecture
 

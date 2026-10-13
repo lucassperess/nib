@@ -9,10 +9,15 @@
 </head>
 <body>
   <main>
-    <h1>Nib <span id="subtitle"></span></h1>
+    <header>
+      <img src="icons/nib.ico" alt="" width="32" height="32" />
+      <h1>Nib <span id="subtitle"></span></h1>
+      <button id="language" type="button"></button>
+    </header>
     <p id="intro"></p>
     <label for="service" id="service-label"></label>
-    <select id="service"><option value="youtube">YouTube</option><option value="instagram">Instagram</option><option value="twitter">X</option></select>
+    <select id="service"><option value=""></option><option value="youtube">YouTube</option><option value="instagram">Instagram</option><option value="twitter">X</option></select>
+    <p id="detected" aria-live="polite"></p>
     <label for="code" id="code-label"></label>
     <input id="code" inputmode="text" autocomplete="off" maxlength="12" spellcheck="false" />
     <button id="send" type="button"></button>

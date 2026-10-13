@@ -14,13 +14,14 @@ O Nib é um aplicativo desktop para **Windows x64** que ajuda a salvar mídias a
 2. Em **Assets**, baixe o instalador do Nib que termina em **.exe**. As opções **Source code** são para quem quer estudar o código, não para instalar o aplicativo.
 3. Execute o instalador e abra o **Nib** pelo menu Iniciar.
 4. Siga o tutorial dentro do app. Na Home, cole um link, escolha **Vídeo** ou **Áudio** e clique em **Baixar com Nib**. Acompanhe em **Downloads** e abra o arquivo concluído em **Histórico**.
+5. Se um site exigir sua conta, o tutorial também mostra como [instalar a extensão do Nib no Chrome ou Brave](#extensão-opcional-para-sessões-privadas). Esse passo é opcional para links públicos.
 
 O [guia ilustrado de instalação e primeiro uso](docs/INSTALL.md) traz mais detalhes e ajuda para problemas comuns. O instalador não exige Node.js, pnpm ou FFmpeg no computador do usuário.
 
 ## Primeiro uso
 
 1. Instale uma versão validada pela página de [Releases](https://github.com/lucassperess/nib/releases).
-2. Acompanhe ou pule o tutorial de cinco passos. Ele inclui conversão de arquivos locais e sessões privadas. É possível repeti-lo em **Configurações → Ajuda → Repetir tutorial**.
+2. Acompanhe ou pule o tutorial de seis passos. Ele inclui conversão de arquivos locais, instalação da extensão e conexão de sessões privadas. É possível repeti-lo em **Configurações → Ajuda → Repetir tutorial**.
 3. Cole ou arraste um link para a Home e escolha Vídeo ou Áudio. **Converter arquivo**, também na Home, inicia um fluxo separado para um arquivo do computador.
 4. Acompanhe a tarefa em Downloads. Se um link contiver várias mídias, escolha os itens desejados.
 5. Abra os arquivos concluídos pelo Histórico. Tarefas com falha ou canceladas continuam em Downloads até serem removidas; elas não entram no Histórico.
@@ -36,11 +37,14 @@ A disponibilidade de sites, qualidades e formatos depende da fonte. Sessões de 
 Quando um serviço exigir acesso à sua conta, o Nib pode receber a sessão de uma extensão para Chrome ou Brave. A extensão está na pasta `extension/` do projeto e também é incluída no instalador; **ela ainda não está publicada em lojas de extensões**.
 
 1. No Nib, abra **Configurações → Sessões privadas → Abrir pasta da extensão**.
-2. No navegador, abra a página de extensões, ative o modo de desenvolvedor e escolha **Carregar sem compactação**. Selecione a pasta aberta pelo Nib.
+2. No **Brave**, abra `brave://extensions`; no **Chrome**, abra `chrome://extensions`. Ative **Modo do desenvolvedor**, clique em **Carregar sem compactação** e selecione a pasta aberta pelo Nib. O ícone roxo do mascote aparecerá na lista de extensões; você pode fixá-lo na barra do navegador.
 3. No Nib, escolha YouTube, Instagram ou X e clique em **Gerar código de conexão**.
-4. Abra a extensão, escolha o mesmo serviço, digite o código mostrado no Nib e clique em **Enviar sessão ao Nib**. O navegador pedirá acesso aos cookies desse serviço.
+4. Abra o site da sua conta em uma aba e clique no ícone da extensão. Ela seleciona automaticamente o site dessa aba; se estiver em outra página, escolha o site manualmente. Digite o código mostrado no Nib e clique em **Enviar sessão ao Nib**. O navegador pedirá acesso aos cookies apenas do serviço selecionado.
+5. Confirme a mensagem **“Sessão do X/Instagram/YouTube conectada neste computador”** no Nib. Se não aparecer, gere outro código e tente novamente.
 
-O código vale por cinco minutos. A extensão envia os cookies somente quando você clica, pela conexão local `127.0.0.1`, e não os armazena. O Nib os protege no perfil do Windows. Use apenas contas que você controla. A [política de privacidade da extensão](extension/PRIVACY.md) explica os dados e seus limites. A importação manual continua disponível.
+O código vale por cinco minutos. A extensão começa em português brasileiro; use **EN** no popup para trocar para inglês e **PT** para voltar. Ela envia os cookies somente quando você clica, pela conexão local `127.0.0.1`, e não os armazena. A extensão guarda apenas a preferência de idioma. O Nib protege a sessão no perfil do Windows. Use apenas contas que você controla. A [política de privacidade da extensão](extension/PRIVACY.md) explica os dados e seus limites. A importação manual continua disponível.
+
+Depois de instalar uma nova versão do Nib, clique em **Recarregar** na extensão em `brave://extensions` ou `chrome://extensions` para usar a versão atualizada do popup. Não é preciso adicionar a extensão de novo.
 
 ## Arquitetura
 

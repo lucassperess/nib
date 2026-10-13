@@ -1,0 +1,5 @@
+{
+  "name": { "message": "Nib — private sessions" },
+  "description": { "message": "Connect your session to Nib only when you ask." },
+  "actionTitle": { "message": "Connect session to Nib" }
+}

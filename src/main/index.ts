@@ -152,7 +152,7 @@ app.whenReady().then(async () => {
   app.setAppUserModelId('dev.nib.desktop')
   const directory = app.getPath('userData')
   store = new Store(directory, app.getPath('downloads'))
-  if (smokeDirectory) store.setPreferences({ ...store.getPreferences(), downloadDirectory: join(directory, 'downloads'), tutorialSeenVersion: 2 })
+  if (smokeDirectory) store.setPreferences({ ...store.getPreferences(), downloadDirectory: join(directory, 'downloads'), tutorialSeenVersion: 3 })
   sessions = new Sessions(directory)
   pairing = new SessionPairing((service, cookies) => {
     if (downloads.busy()) throw new Error('Wait for active downloads before changing sessions')
