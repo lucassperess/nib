@@ -31,6 +31,10 @@ O Nib guarda suas preferências e o Histórico no seu perfil do Windows. Instala
 
 Para converter um arquivo que já está no computador, use **Converter arquivo** na Home, escolha o formato e acompanhe a tarefa em Downloads. O original é preservado. O tutorial também mostra onde importar uma sessão privada quando um site exigir acesso à sua conta; isso é opcional para links públicos.
 
+### Se o site pedir uma sessão da sua conta
+
+Em **Configurações → Sessões privadas**, escolha o serviço e use **Abrir pasta da extensão**. No Chrome ou Brave, abra a página de extensões, ative o modo de desenvolvedor e carregue essa pasta **sem compactação**. De volta ao Nib, clique em **Gerar código de conexão**. Abra a extensão, selecione o mesmo serviço e envie a sessão com o código exibido. O navegador pedirá permissão para ler os cookies desse site. O código expira em cinco minutos. A extensão é opcional, não está publicada em loja e não guarda cópias dos cookies; a importação manual continua disponível.
+
 ## Se algo não funcionar
 
 | Situação | Faça isto |
@@ -54,5 +58,7 @@ Nib runs on **Windows x64**. No terminal, Node.js, or VPS is needed.
 3. Follow or skip the five-step tour. You can replay it under **Settings → Help → Replay the tour**.
 4. On Home, paste a media link, choose **Video** or **Audio**, and click **Download with Nib**. Follow the task in Downloads and open completed files from History.
 5. **Convert a file** on Home works with a local file and preserves the original. Private sessions are optional and only needed when a site requires access to your account.
+
+For a private session, open **Settings → Private sessions → Open extension folder**. In Chrome or Brave, enable developer mode and **Load unpacked** with that folder. Choose a service in Nib and generate a connection code. Open the extension, choose the same service, enter the code and send the session. The code expires after five minutes. The extension is optional and is not yet published in a store.
 
 For errors, read the message in Downloads and use **Retry**. Updating Nib preserves its local preferences and History. The [README](../README.md) includes troubleshooting and development details.

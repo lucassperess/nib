@@ -1,17 +1,19 @@
 import { app, BrowserWindow, dialog, ipcMain, shell } from 'electron'
 import { basename, join } from 'node:path'
-import { existsSync, mkdirSync } from 'node:fs'
+import { existsSync, mkdirSync, readFileSync, rmSync } from 'node:fs'
 import { randomUUID } from 'node:crypto'
 import { writeFile } from 'node:fs/promises'
 import type { AppSnapshot, ConversionFormat, HistoryQuery, MediaMode, Preferences, SessionService, Task } from '../shared/types'
 import { Store } from './store'
 import { Sessions } from './sessions'
+import { SessionPairing } from './session-pairing'
 import { MediaEngine } from './engine'
 import { Downloads } from './downloads'
 
 let window: BrowserWindow | null = null
 let store: Store
 let sessions: Sessions
+let pairing: SessionPairing
 let engine: MediaEngine
 let downloads: Downloads
 let engineState: AppSnapshot['engine'] = 'starting'
@@ -90,6 +92,12 @@ function registerIpc(): void {
     if (downloads.busy()) throw new Error('Wait for active downloads before changing sessions')
     sessions.clear(service); publish()
   })
+  handle('nib:begin-session-pairing', (service: SessionService) => pairing.begin(service))
+  handle('nib:open-extension-folder', async () => {
+    const directory = app.isPackaged ? join(process.resourcesPath, 'extension') : join(app.getAppPath(), 'extension')
+    const error = await shell.openPath(directory)
+    if (error) throw new Error(error)
+  })
   handle('nib:update-engine', async () => {
     if (downloads.busy()) throw new Error('Wait for active downloads before updating the extractor')
     const version = await engine.update(); publish(); return version
@@ -146,6 +154,11 @@ app.whenReady().then(async () => {
   store = new Store(directory, app.getPath('downloads'))
   if (smokeDirectory) store.setPreferences({ ...store.getPreferences(), downloadDirectory: join(directory, 'downloads'), tutorialSeenVersion: 2 })
   sessions = new Sessions(directory)
+  pairing = new SessionPairing((service, cookies) => {
+    if (downloads.busy()) throw new Error('Wait for active downloads before changing sessions')
+    sessions.importBrowser(service, cookies)
+    publish()
+  })
   engine = new MediaEngine(directory)
   downloads = new Downloads(store, engine, sessions, publishTask, publish)
   registerIpc(); createWindow()
@@ -164,6 +177,17 @@ app.whenReady().then(async () => {
       const bridge = await window!.webContents.executeJavaScript('window.nib.snapshot().then(s => ({ version: s.appVersion, engine: s.engine }))')
       if (bridge.version !== app.getVersion() || bridge.engine !== 'ready') throw new Error('Sandboxed preload bridge failed')
       report.bridge = bridge
+      const browserPair = await pairing.begin('youtube')
+      const browserResponse = await fetch(`http://127.0.0.1:${browserPair.port}/session`, {
+        method: 'POST',
+        headers: { Origin: 'chrome-extension://aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', 'Content-Type': 'application/json' },
+        body: JSON.stringify({ service: 'youtube', code: browserPair.code, cookies: [{ domain: '.youtube.com', path: '/', name: 'NIB_TEST', value: 'synthetic', secure: true, httpOnly: true }] })
+      })
+      const browserCookieFile = join(directory, 'browser-smoke-cookies.txt')
+      if (!browserResponse.ok || !sessions.status().youtube || !sessions.materializeFor('https://www.youtube.com/watch?v=test', browserCookieFile) || !readFileSync(browserCookieFile, 'utf8').includes('NIB_TEST')) throw new Error('Browser session import failed')
+      rmSync(browserCookieFile, { force: true })
+      sessions.clear('youtube')
+      report.browserSession = { imported: true, cleared: !sessions.status().youtube }
       if (process.env.NIB_CAPTURE_SCENES === '1') {
         report.layout = await window!.webContents.executeJavaScript("({ viewport: innerWidth, wordmark: document.querySelector('.hero-logo-frame')?.getBoundingClientRect().width })")
         for (const [name, index] of [['home', 0], ['downloads', 1], ['history', 2], ['settings', 3]] as const) {
@@ -238,4 +262,4 @@ app.whenReady().then(async () => {
   }
 })
 app.on('window-all-closed', () => app.quit())
-app.on('before-quit', () => { engine?.stop(); store?.close() })
+app.on('before-quit', () => { pairing?.stop(); engine?.stop(); store?.close() })

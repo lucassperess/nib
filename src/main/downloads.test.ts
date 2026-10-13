@@ -54,6 +54,7 @@ it('saves a local media result and preserves an existing filename', async () => 
   await waitFor(() => records.get(first)?.state === 'completed')
   const second = downloads.submit('https://example.com/two', 'video')
   await waitFor(() => records.get(second)?.state === 'completed')
+  await waitFor(() => readdirSync(folder).every(name => !name.startsWith('.nib-')))
   expect(readdirSync(folder).sort()).toEqual(['Clip (2).mp4', 'Clip.mp4'])
   expect(records.get(first)?.outputPath && existsSync(records.get(first)!.outputPath!)).toBe(true)
   expect(records.get(second)?.outputPath && existsSync(records.get(second)!.outputPath!)).toBe(true)

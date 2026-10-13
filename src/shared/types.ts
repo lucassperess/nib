@@ -52,6 +52,8 @@ export interface NibApi {
   setPreferences(patch: Partial<Preferences>): Promise<Preferences>
   chooseDirectory(): Promise<string | null>
   importSession(service: SessionService, cookie: string): Promise<void>
+  beginSessionPairing(service: SessionService): Promise<{ code: string; expiresAt: number }>
+  openExtensionFolder(): Promise<void>
   clearSession(service: SessionService): Promise<void>
   clearHistory(): Promise<void>
   openPath(path: string, folder: boolean): Promise<void>

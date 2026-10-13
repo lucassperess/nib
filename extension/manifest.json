@@ -1,0 +1,15 @@
+{
+  "manifest_version": 3,
+  "name": "Nib — sessões privadas",
+  "description": "Envia ao Nib, somente quando você pedir, os cookies de um site compatível.",
+  "version": "0.1.0",
+  "action": { "default_popup": "popup.html", "default_title": "Conectar sessão ao Nib" },
+  "permissions": ["cookies"],
+  "host_permissions": ["http://127.0.0.1:43837/*"],
+  "optional_host_permissions": [
+    "https://youtube.com/*", "https://*.youtube.com/*",
+    "https://instagram.com/*", "https://*.instagram.com/*",
+    "https://x.com/*", "https://*.x.com/*",
+    "https://twitter.com/*", "https://*.twitter.com/*"
+  ]
+}
