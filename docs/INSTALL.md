@@ -34,10 +34,11 @@ Para converter um arquivo que já está no computador, use **Converter arquivo**
 ### Se o site pedir uma sessão da sua conta
 
 1. Em **Configurações → Sessões privadas**, clique em **Abrir pasta da extensão**.
-2. No Brave, abra `brave://extensions`; no Chrome, abra `chrome://extensions`. Ative **Modo do desenvolvedor**, escolha **Carregar sem compactação** e selecione a pasta que o Nib abriu. O ícone roxo do mascote identifica a extensão.
-3. No Nib, escolha o site e clique em **Gerar código de conexão**.
-4. Abra esse site no navegador e clique no ícone do Nib. A extensão seleciona automaticamente X, Instagram ou YouTube conforme a aba aberta. Em outra página, selecione o site manualmente. Digite o código e clique em **Enviar sessão ao Nib**. Permita o acesso aos cookies do site selecionado quando o navegador solicitar.
-5. Confira a confirmação **“Sessão do [site] conectada neste computador”** no Nib. Se necessário, gere um código novo: ele expira em cinco minutos.
+2. No Brave, abra `brave://extensions`; no Chrome, abra `chrome://extensions`. Ative **Modo do desenvolvedor**, escolha **Carregar sem compactação** e selecione a pasta que o Nib abriu. Confirme que **Nib — sessões privadas** aparece na lista. Se já estava instalado, use **Recarregar** no cartão da extensão.
+3. Clique no **quebra-cabeça** da barra do navegador, encontre o Nib e clique no **alfinete** para deixar o ícone roxo do mascote visível. O quebra-cabeça é o menu de extensões do navegador.
+4. No Nib, escolha o site e clique em **Gerar código de conexão**.
+5. Abra esse site no navegador e clique no ícone do Nib. A extensão seleciona automaticamente X, Instagram ou YouTube conforme a aba aberta. Em outra página, selecione o site manualmente. Digite o código e clique em **Enviar sessão ao Nib**. Permita o acesso aos cookies do site selecionado quando o navegador solicitar.
+6. Confira a confirmação **“Sessão do [site] conectada neste computador”** no Nib. Se necessário, gere um código novo: ele expira em cinco minutos.
 
 A extensão começa em português; use **EN** para inglês e **PT** para voltar. Ela é opcional, não está publicada em loja e não guarda cópias dos cookies. A importação manual continua disponível.
 
@@ -67,7 +68,7 @@ Nib runs on **Windows x64**. No terminal, Node.js, or VPS is needed.
 4. On Home, paste a media link, choose **Video** or **Audio**, and click **Download with Nib**. Follow the task in Downloads and open completed files from History.
 5. **Convert a file** on Home works with a local file and preserves the original. Private sessions are optional and only needed when a site requires access to your account.
 
-For a private session, open **Settings → Private sessions → Open extension folder**. Open `chrome://extensions` in Chrome or `brave://extensions` in Brave, enable **Developer mode**, and **Load unpacked** with that folder. Choose a service in Nib and generate a connection code. Open the service's site in a browser tab, click the purple Nib icon, and check that the correct service was selected automatically. Enter the code and send the session. Confirm **“[site] session connected on this computer”** in Nib. The code expires after five minutes. The popup starts in Portuguese; **EN** switches to English and **PT** switches back. The extension is optional and is not yet published in a store.
+For a private session, open **Settings → Private sessions → Open extension folder**. Open `chrome://extensions` in Chrome or `brave://extensions` in Brave, enable **Developer mode**, and **Load unpacked** with that folder. If already installed, click **Reload** on its card. Click the browser's **puzzle piece**, find Nib, and **pin** it to show the purple mascot icon in the toolbar. Choose a service in Nib and generate a connection code. Open the service's site in a browser tab, click Nib's icon, and check that the correct service was selected automatically. Enter the code and send the session. Confirm **“[site] session connected on this computer”** in Nib. The code expires after five minutes. The popup starts in Portuguese; **EN** switches to English and **PT** switches back. The extension is optional and is not yet published in a store.
 
 After updating Nib, use **Reload** on the browser's extensions page to apply extension changes. You do not need to install it again.
 
